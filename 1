@@ -1,0 +1,1642 @@
+Address     Code        Basic                        Line Source
+0x00400000  0x335000ef  jal x1,0x00000b34            156  	jal clear_board
+0x00400004  0x35d000ef  jal x1,0x00000b5c            157  	jal draw_title_screen
+0x00400008  0xffff02b7  lui x5,0xfffffff0            160      	lw t0, 0xFFFF0004 # Verify if the player pressed an input
+0x0040000c  0x0042a283  lw x5,4(x5)                       
+0x00400010  0x03100313  addi x6,x0,0x00000031        161      	li t1, 0x00000031
+0x00400014  0x00628e63  beq x5,x6,0x0000001c         162      	beq t0, t1, one_player_mode
+0x00400018  0x03200313  addi x6,x0,0x00000032        163      	li t1, 0x00000032
+0x0040001c  0x02628263  beq x5,x6,0x00000024         164      	beq	t0, t1, two_player_mode
+0x00400020  0x0fa00513  addi x10,x0,0x000000fa       166      	li a0, 250
+0x00400024  0x02000893  addi x17,x0,0x00000020       167      	li a7, 32
+0x00400028  0x00000073  ecall                        168      	ecall
+0x0040002c  0xfddff06f  jal x0,0xffffffdc            170      	j select_1_or_2_players # If a key was not pressed go back to the loop
+0x00400030  0x00100293  addi x5,x0,1                 173      	li t0, 1
+0x00400034  0x0fc10317  auipc x6,0x0000fc10          174      	sw t0, player_mode, t1
+0x00400038  0xfe532023  sw x5,0xffffffe0(x6)              
+0x0040003c  0x0140006f  jal x0,0x00000014            175      	j start_game
+0x00400040  0x00200293  addi x5,x0,2                 178      	li t0, 2
+0x00400044  0x0fc10317  auipc x6,0x0000fc10          179      	sw t0, player_mode, t1
+0x00400048  0xfc532823  sw x5,0xffffffd0(x6)              
+0x0040004c  0x0040006f  jal x0,0x00000004            180      	j start_game
+0x00400050  0xffff02b7  lui x5,0xfffffff0            183      	sw zero, 0xFFFF0000, t0 # This clears the status if a key was pressed
+0x00400054  0x0002a023  sw x0,0(x5)                       
+0x00400058  0x0040006f  jal x0,0x00000004            185      j new_round	
+0x0040005c  0x00100293  addi x5,x0,1                 202  	li t0, 1
+0x00400060  0x0fc10317  auipc x6,0x0000fc10          203  	sw t0, ball_y_speed, t1
+0x00400064  0xfa532e23  sw x5,0xffffffbc(x6)              
+0x00400068  0xfff00293  addi x5,x0,0xffffffff        204  	li t0, -1
+0x0040006c  0x0fc10317  auipc x6,0x0000fc10          205  	sw t0, ball_y_dir, t1
+0x00400070  0xfa532a23  sw x5,0xffffffb4(x6)              
+0x00400074  0x0fc10317  auipc x6,0x0000fc10          206  	sw zero, computer_speed, t1
+0x00400078  0xfa032e23  sw x0,0xffffffbc(x6)              
+0x0040007c  0x0fc10317  auipc x6,0x0000fc10          207  	sw zero, computer_count, t1
+0x00400080  0xfa032823  sw x0,0xffffffb0(x6)              
+0x00400084  0x00000413  addi x8,x0,0                 209  	li s0, 0
+0x00400088  0x00000493  addi x9,x0,0                 210  	li s1, 0
+0x0040008c  0x0fc10917  auipc x18,0x0000fc10         211  	lw s2, ball_x_dir
+0x00400090  0xf8c92903  lw x18,0xffffff8c(x18)            
+0x00400094  0x0fc10997  auipc x19,0x0000fc10         212  	lw s3, ball_y_speed
+0x00400098  0xf889a983  lw x19,0xffffff88(x19)            
+0x0040009c  0x00d00a13  addi x20,x0,13               213  	li s4, 13
+0x004000a0  0x00d00a93  addi x21,x0,13               214  	li s5, 13
+0x004000a4  0x02000b13  addi x22,x0,0x00000020       215  	li s6, 32
+0x004000a8  0x00000b93  addi x23,x0,0                216  	li s7, 0
+0x004000ac  0x289000ef  jal x1,0x00000a88            218  	jal clear_board
+0x004000b0  0x0fc10517  auipc x10,0x0000fc10         220  	lw a0, p1_score
+0x004000b4  0xf7452503  lw x10,0xffffff74(x10)            
+0x004000b8  0x00100593  addi x11,x0,1                221  	li a1, 1
+0x004000bc  0x131000ef  jal x1,0x00000930            222  	jal draw_score
+0x004000c0  0x0fc10517  auipc x10,0x0000fc10         224  	lw a0, p2_score
+0x004000c4  0xf6852503  lw x10,0xffffff68(x10)            
+0x004000c8  0x03600593  addi x11,x0,0x00000036       225  	li a1, 54
+0x004000cc  0x121000ef  jal x1,0x00000920            226  	jal draw_score
+0x004000d0  0x00d00513  addi x10,x0,13               228  	li a0, 13
+0x004000d4  0x014005b3  add x11,x0,x20               229  	mv a1, s4
+0x004000d8  0x0fc10617  auipc x12,0x0000fc10         230  	lw a2, color_red
+0x004000dc  0xf3062603  lw x12,0xffffff30(x12)            
+0x004000e0  0x00000693  addi x13,x0,0                231  	li a3, 0
+0x004000e4  0x045000ef  jal x1,0x00000844            232  	jal	draw_paddle
+0x004000e8  0x03200513  addi x10,x0,0x00000032       234  	li a0, 50 
+0x004000ec  0x015005b3  add x11,x0,x21               235  	mv a1, s5
+0x004000f0  0x0fc10617  auipc x12,0x0000fc10         236  	lw a2, color_red
+0x004000f4  0xf1862603  lw x12,0xffffff18(x12)            
+0x004000f8  0x00000693  addi x13,x0,0                237  	li a3, 0
+0x004000fc  0x02d000ef  jal x1,0x0000082c            238  	jal draw_paddle
+0x00400100  0x3e800513  addi x10,x0,0x000003e8       240  	li a0, 1000
+0x00400104  0x02000893  addi x17,x0,0x00000020       241  	li a7, 32		
+0x00400108  0x00000073  ecall                        242  	ecall		# 1 second delay
+0x0040010c  0x0040006f  jal x0,0x00000004            244  	j main_game_loop
+0x00400110  0x114000ef  jal x1,0x00000114            261  		jal check_collisions
+0x00400114  0x2a4000ef  jal x1,0x000002a4            262  		jal move_ball
+0x00400118  0x00d00513  addi x10,x0,13               264  		li a0, 13
+0x0040011c  0x014005b3  add x11,x0,x20               265  		mv a1, s4
+0x00400120  0x0fc10617  auipc x12,0x0000fc10         266  		lw a2, color_red
+0x00400124  0xee862603  lw x12,0xfffffee8(x12)            
+0x00400128  0x008006b3  add x13,x0,x8                267  		mv a3, s0
+0x0040012c  0x7fc000ef  jal x1,0x000007fc            268  		jal draw_paddle
+0x00400130  0x00a00a33  add x20,x0,x10               269  		mv s4, a0
+0x00400134  0x00b00433  add x8,x0,x11                270  		mv s0, a1
+0x00400138  0x0fc10297  auipc x5,0x0000fc10          273  		lw t0, player_mode
+0x0040013c  0xedc2a283  lw x5,0xfffffedc(x5)              
+0x00400140  0x00100313  addi x6,x0,1                 274  		li t1, 1
+0x00400144  0x04629063  bne x5,x6,0x00000040         275  		bne t0, t1, .end_ai
+0x00400148  0x0fc10297  auipc x5,0x0000fc10          277  		lw  t0, computer_count
+0x0040014c  0xee42a283  lw x5,0xfffffee4(x5)              
+0x00400150  0xfff28293  addi x5,x5,0xffffffff        278  		addi t0, t0, -1
+0x00400154  0x0fc10317  auipc x6,0x0000fc10          279  		sw t0, computer_count, t1
+0x00400158  0xec532c23  sw x5,0xfffffed8(x6)              
+0x0040015c  0x02504463  blt x0,x5,0x00000028         280  		bgt t0 , zero, .end_ai # as long as computer cound is > 0, perform ai
+0x00400160  0x0fc10297  auipc x5,0x0000fc10          281  		lw t0, computer_speed
+0x00400164  0xed02a283  lw x5,0xfffffed0(x5)              
+0x00400168  0x0fc10317  auipc x6,0x0000fc10          282  		sw t0, computer_count, t1
+0x0040016c  0xec532223  sw x5,0xfffffec4(x6)              
+0x00400170  0x002a8313  addi x6,x21,2                283  		addi t1, s5, 2 	# Calculate the middle of the paddle
+0x00400174  0x01734663  blt x6,x23,0x0000000c        284  		blt t1, s7, .go_down
+0x00400178  0x00100493  addi x9,x0,1                 285  		li s1, 1
+0x0040017c  0x0080006f  jal x0,0x00000008            286  		j .end_ai
+0x00400180  0x00200493  addi x9,x0,2                 289  		li s1, 2
+0x00400184  0x03200513  addi x10,x0,0x00000032       292  		li a0, 50
+0x00400188  0x015005b3  add x11,x0,x21               293  		mv a1, s5
+0x0040018c  0x0fc10617  auipc x12,0x0000fc10         294  		lw a2, color_red
+0x00400190  0xe7c62603  lw x12,0xfffffe7c(x12)            
+0x00400194  0x009006b3  add x13,x0,x9                295  		mv a3, s1
+0x00400198  0x790000ef  jal x1,0x00000790            296  		jal draw_paddle
+0x0040019c  0x00a00ab3  add x21,x0,x10               297  		mv s5, a0
+0x004001a0  0x00b004b3  add x9,x0,x11                298  		mv s1, a1
+0x004001a4  0x00200293  addi x5,x0,2                 302  		li t0, 2 # A counter is loaded for an aprox 50ms delay
+0x004001a8  0x02505663  bge x0,x5,0x0000002c         305  		blez t0, .end_standby
+0x004001ac  0x00a00513  addi x10,x0,10               308  		li a0, 10
+0x004001b0  0x02000893  addi x17,x0,0x00000020       309  		li a7, 32
+0x004001b4  0x00000073  ecall                        310  		ecall		
+0x004001b8  0xfff28293  addi x5,x5,0xffffffff        312  		addi t0, t0, -1
+0x004001bc  0xffff0337  lui x6,0xfffffff0            315  		lw t1, 0xFFFF0000
+0x004001c0  0x00032303  lw x6,0(x6)                       
+0x004001c4  0xfe6052e3  bge x0,x6,0xffffffe4         316  		blez t1, .standby
+0x004001c8  0x010000ef  jal x1,0x00000010            318  		jal adjust_dir
+0x004001cc  0xffff0337  lui x6,0xfffffff0            319  		sw zero, 0xFFFF0000, t1 # Clean the state that a key has been pressed
+0x004001d0  0x00032023  sw x0,0(x6)                       
+0x004001d4  0xf3dff06f  jal x0,0xffffff3c            323  		j .draw_objects
+0x004001d8  0xffff02b7  lui x5,0xfffffff0            330  	lw t0, 0xFFFF0004
+0x004001dc  0x0042a283  lw x5,4(x5)                       
+0x004001e0  0x07700313  addi x6,x0,0x00000077        333  		li t1, 119
+0x004001e4  0x00629663  bne x5,x6,0x0000000c         334  		bne t0, t1, .adjust_dir_left_down
+0x004001e8  0x00100413  addi x8,x0,1                 335  		li s0, 1
+0x004001ec  0x0340006f  jal x0,0x00000034            336  		j .adjust_dir_done
+0x004001f0  0x07300313  addi x6,x0,0x00000073        339  		li t1, 115
+0x004001f4  0x00629663  bne x5,x6,0x0000000c         340  		bne t0, t1, .adjust_dir_right_up
+0x004001f8  0x00200413  addi x8,x0,2                 341  		li s0, 2
+0x004001fc  0x0240006f  jal x0,0x00000024            342  		j .adjust_dir_done
+0x00400200  0x06f00313  addi x6,x0,0x0000006f        345  		li t1, 111
+0x00400204  0x00629663  bne x5,x6,0x0000000c         346  		bne t0, t1, .adjust_dir_right_down
+0x00400208  0x00100493  addi x9,x0,1                 347  		li s1, 1
+0x0040020c  0x0140006f  jal x0,0x00000014            348  		j .adjust_dir_done
+0x00400210  0x06c00313  addi x6,x0,0x0000006c        351  		li t1, 108
+0x00400214  0x00629663  bne x5,x6,0x0000000c         352  		bne t0, t1, .adjust_dir_none
+0x00400218  0x00200493  addi x9,x0,2                 353  		li s1, 2
+0x0040021c  0x0040006f  jal x0,0x00000004            354  		j .adjust_dir_done
+0x00400220  0x00008067  jalr x0,x1,0                 360  		jr ra
+0x00400224  0x00000293  addi x5,x0,0                 370  	li t0, 0
+0x00400228  0x1e5b0863  beq x22,x5,0x000001f0        371  	beq s6, t0, p1_loses_round
+0x0040022c  0x03f00293  addi x5,x0,0x0000003f        372  	li t0, 63
+0x00400230  0x225b0063  beq x22,x5,0x00000220        373  	beq s6, t0, p2_loses_round
+0x00400234  0x00e00293  addi x5,x0,14                375  	li t0, 14
+0x00400238  0x005b0863  beq x22,x5,0x00000010        376  	beq s6, t0, .left_collision
+0x0040023c  0x03100293  addi x5,x0,0x00000031        378  	li t0, 49
+0x00400240  0x005b0e63  beq x22,x5,0x0000001c        379  	beq s6, t0, .right_collision
+0x00400244  0x0340006f  jal x0,0x00000034            381  	j .no_paddle_collision
+0x00400248  0x034bc863  blt x23,x20,0x00000030       385  		blt s7, s4, .no_paddle_collision
+0x0040024c  0x005a0293  addi x5,x20,5                387  		addi t0, s4, 5 #Calculating the pallet bottom position
+0x00400250  0x0372c463  blt x5,x23,0x00000028        388  		bgt s7, t0, .no_paddle_collision
+0x00400254  0x00100913  addi x18,x0,1                389  		li s2, 1
+0x00400258  0x0240006f  jal x0,0x00000024            390  		j .paddle_hit
+0x0040025c  0x015bce63  blt x23,x21,0x0000001c       394  		blt s7, s5, .no_paddle_collision
+0x00400260  0x00500293  addi x5,x0,5                 395  		li t0, 5
+0x00400264  0x005a82b3  add x5,x21,x5                396  		add t0, s5, t0
+0x00400268  0x0172c863  blt x5,x23,0x00000010        397  		bgt s7, t0, .no_paddle_collision
+0x0040026c  0x415b82b3  sub x5,x23,x21               398  		sub t0, s7, s5		#Distance from top to hit
+0x00400270  0xfff00913  addi x18,x0,0xffffffff       399  		li s2, -1 #Change ball direction
+0x00400274  0x0080006f  jal x0,0x00000008            400  		j .paddle_hit
+0x00400278  0x1080006f  jal x0,0x00000108            404  		j .check_horizontal_hit
+0x0040027c  0x05000513  addi x10,x0,0x00000050       408  		li a0, 80
+0x00400280  0x05000593  addi x11,x0,0x00000050       409  		li a1, 80
+0x00400284  0x02000613  addi x12,x0,0x00000020       410  		li a2, 32
+0x00400288  0x07f00693  addi x13,x0,0x0000007f       411  		li a3, 127
+0x0040028c  0x01f00893  addi x17,x0,31               412  		li a7, 31
+0x00400290  0x00000073  ecall                        413  		ecall
+0x00400294  0x0fc10297  auipc x5,0x0000fc10          415  		lw t0, level
+0x00400298  0xda02a283  lw x5,0xfffffda0(x5)              
+0x0040029c  0x0fc10317  auipc x6,0x0000fc10          416  		sw t0, computer_speed, t1
+0x004002a0  0xd8532a23  sw x5,0xfffffd94(x6)              
+0x004002a4  0x414b82b3  sub x5,x23,x20               419  		sub t0, s7, s4
+0x004002a8  0x00000313  addi x6,x0,0                 420  		li t1, 0
+0x004002ac  0x02628663  beq x5,x6,0x0000002c         421  		beq t0, t1, .top_high
+0x004002b0  0x00100313  addi x6,x0,1                 422  		li t1, 1
+0x004002b4  0x04628063  beq x5,x6,0x00000040         423  		beq t0, t1, .top_mid
+0x004002b8  0x00200313  addi x6,x0,2                 424  		li t1, 2
+0x004002bc  0x04628a63  beq x5,x6,0x00000054         425  		beq t0, t1, .top_low
+0x004002c0  0x00300313  addi x6,x0,3                 426  		li t1, 3
+0x004002c4  0x06628463  beq x5,x6,0x00000068         427  		beq t0, t1, .bottom_high
+0x004002c8  0x00400313  addi x6,x0,4                 428  		li t1, 4
+0x004002cc  0x06628e63  beq x5,x6,0x0000007c         429  		beq t0, t1, .bottom_mid
+0x004002d0  0x00500313  addi x6,x0,5                 430  		li t1, 5
+0x004002d4  0x08628863  beq x5,x6,0x00000090         431  		beq t0, t1, .bottom_low
+0x004002d8  0x00000993  addi x19,x0,0                434  		li s3, 0
+0x004002dc  0x0fc10297  auipc x5,0x0000fc10          435  		sw s3, ball_y_speed, t0
+0x004002e0  0xd532a023  sw x19,0xfffffd40(x5)             
+0x004002e4  0xfff00993  addi x19,x0,0xffffffff       436  		li s3, -1
+0x004002e8  0x0fc10297  auipc x5,0x0000fc10          437  		sw s3, ball_y_dir, t0
+0x004002ec  0xd332ac23  sw x19,0xfffffd38(x5)             
+0x004002f0  0x0900006f  jal x0,0x00000090            438  		j .check_horizontal_hit
+0x004002f4  0x00100993  addi x19,x0,1                441  		li s3, 1
+0x004002f8  0x0fc10297  auipc x5,0x0000fc10          442  		sw s3, ball_y_speed, t0
+0x004002fc  0xd332a223  sw x19,0xfffffd24(x5)             
+0x00400300  0xfff00993  addi x19,x0,0xffffffff       443  		li s3, -1
+0x00400304  0x0fc10297  auipc x5,0x0000fc10          444  		sw s3, ball_y_dir, t0
+0x00400308  0xd132ae23  sw x19,0xfffffd1c(x5)             
+0x0040030c  0x0740006f  jal x0,0x00000074            445  		j .check_horizontal_hit
+0x00400310  0x00200993  addi x19,x0,2                448  		li s3, 2
+0x00400314  0x0fc10297  auipc x5,0x0000fc10          449  		sw s3, ball_y_speed, t0
+0x00400318  0xd132a423  sw x19,0xfffffd08(x5)             
+0x0040031c  0xfff00993  addi x19,x0,0xffffffff       450  		li s3, -1
+0x00400320  0x0fc10297  auipc x5,0x0000fc10          451  		sw s3, ball_y_dir, t0
+0x00400324  0xd132a023  sw x19,0xfffffd00(x5)             
+0x00400328  0x0580006f  jal x0,0x00000058            452  		j .check_horizontal_hit
+0x0040032c  0x00300993  addi x19,x0,3                455  		li s3, 3
+0x00400330  0x0fc10297  auipc x5,0x0000fc10          456  		sw s3, ball_y_speed, t0
+0x00400334  0xcf32a623  sw x19,0xfffffcec(x5)             
+0x00400338  0x00100993  addi x19,x0,1                457  		li s3, 1
+0x0040033c  0x0fc10297  auipc x5,0x0000fc10          458  		sw s3, ball_y_dir, t0
+0x00400340  0xcf32a223  sw x19,0xfffffce4(x5)             
+0x00400344  0x03c0006f  jal x0,0x0000003c            459  		j .check_horizontal_hit
+0x00400348  0x00400993  addi x19,x0,4                462  		li s3, 4
+0x0040034c  0x0fc10297  auipc x5,0x0000fc10          463  		sw s3, ball_y_speed, t0
+0x00400350  0xcd32a823  sw x19,0xfffffcd0(x5)             
+0x00400354  0x00100993  addi x19,x0,1                464  		li s3, 1
+0x00400358  0x0fc10297  auipc x5,0x0000fc10          465  		sw s3, ball_y_dir, t0
+0x0040035c  0xcd32a423  sw x19,0xfffffcc8(x5)             
+0x00400360  0x0200006f  jal x0,0x00000020            466  		j .check_horizontal_hit
+0x00400364  0x00500993  addi x19,x0,5                469  		li s3, 5
+0x00400368  0x0fc10297  auipc x5,0x0000fc10          470  		sw s3, ball_y_speed, t0
+0x0040036c  0xcb32aa23  sw x19,0xfffffcb4(x5)             
+0x00400370  0x00100993  addi x19,x0,1                471  		li s3, 1
+0x00400374  0x0fc10297  auipc x5,0x0000fc10          472  		sw s3, ball_y_dir, t0
+0x00400378  0xcb32a623  sw x19,0xfffffcac(x5)             
+0x0040037c  0x0040006f  jal x0,0x00000004            473  		j .check_horizontal_hit
+0x00400380  0x01f00293  addi x5,x0,31                476  		li t0, 31
+0x00400384  0x005b8663  beq x23,x5,0x0000000c        477  		beq s7, t0, .horizontal_wall_hit
+0x00400388  0x00000293  addi x5,x0,0                 478  		li t0, 0
+0x0040038c  0x025b9463  bne x23,x5,0x00000028        479  		bne s7, t0, .no_collision
+0x00400390  0x00100293  addi x5,x0,1                 483  		li t0, 1
+0x00400394  0x0332c063  blt x5,x19,0x00000020        484  		bgt s3, t0, .no_collision
+0x00400398  0x0fc10297  auipc x5,0x0000fc10          485  		lw t0, ball_y_dir
+0x0040039c  0xc882a283  lw x5,0xfffffc88(x5)              
+0x004003a0  0xfff04313  xori x6,x0,0xffffffff        486  		not t1, zero
+0x004003a4  0x0062c2b3  xor x5,x5,x6                 487  		xor t0, t0, t1
+0x004003a8  0x00128293  addi x5,x5,1                 488  		addi t0, t0, 1
+0x004003ac  0x0fc10317  auipc x6,0x0000fc10          489  		sw t0, ball_y_dir, t1
+0x004003b0  0xc6532a23  sw x5,0xfffffc74(x6)              
+0x004003b4  0x00008067  jalr x0,x1,0                 492  		jr ra
+0x004003b8  0xffc10113  addi x2,x2,0xfffffffc        508  	addi sp, sp -4
+0x004003bc  0x00112023  sw x1,0(x2)                  509  	sw ra, 0(sp)
+0x004003c0  0x01600533  add x10,x0,x22               511  	mv a0, s6
+0x004003c4  0x017005b3  add x11,x0,x23               512  	mv a1, s7
+0x004003c8  0x0fc10617  auipc x12,0x0000fc10         513  	lw a2, color_black
+0x004003cc  0xc3c62603  lw x12,0xfffffc3c(x12)            
+0x004003d0  0x6b4000ef  jal x1,0x000006b4            514  	jal draw_point
+0x004003d4  0x012b0b33  add x22,x22,x18              516  	add s6, s6, s2 # add the x speed to the x coordinate
+0x004003d8  0xfff00293  addi x5,x0,0xffffffff        517  	li t0, -1
+0x004003dc  0x005989b3  add x19,x19,x5               518  	add s3, s3, t0
+0x004003e0  0x01304c63  blt x0,x19,0x00000018        519  	bgt s3, zero, .no_y_change
+0x004003e4  0x0fc10297  auipc x5,0x0000fc10          522  		lw t0, ball_y_dir
+0x004003e8  0xc3c2a283  lw x5,0xfffffc3c(x5)              
+0x004003ec  0x005b8bb3  add x23,x23,x5               523  		add s7, s7, t0
+0x004003f0  0x0fc10997  auipc x19,0x0000fc10         524  		lw s3, ball_y_speed
+0x004003f4  0xc2c9a983  lw x19,0xfffffc2c(x19)            
+0x004003f8  0x01600533  add x10,x0,x22               527  		mv a0, s6
+0x004003fc  0x017005b3  add x11,x0,x23               528  		mv a1, s7	
+0x00400400  0x0fc10617  auipc x12,0x0000fc10         529  		lw a2, color_white
+0x00400404  0xc0062603  lw x12,0xfffffc00(x12)            
+0x00400408  0x67c000ef  jal x1,0x0000067c            530  		jal draw_point
+0x0040040c  0x00012083  lw x1,0(x2)                  532  	lw ra, 0(sp)
+0x00400410  0x00410113  addi x2,x2,4                 533  	addi sp, sp, 4
+0x00400414  0x00008067  jalr x0,x1,0                 534  	jr ra
+0x00400418  0x0fc10297  auipc x5,0x0000fc10          538  	lw t0, p2_score
+0x0040041c  0xc102a283  lw x5,0xfffffc10(x5)              
+0x00400420  0x00128293  addi x5,x5,1                 539  	addi t0, t0, 1
+0x00400424  0x0fc10317  auipc x6,0x0000fc10          540  	sw t0, p2_score, t1
+0x00400428  0xc0532223  sw x5,0xfffffc04(x6)              
+0x0040042c  0x00100293  addi x5,x0,1                 543  	li t0, 1
+0x00400430  0x0fc10317  auipc x6,0x0000fc10          544  	sw t0, ball_x_dir, t1
+0x00400434  0xbe532423  sw x5,0xfffffbe8(x6)              
+0x00400438  0x550010ef  jal x1,0x00001550            545  	jal clear_key_press
+0x0040043c  0x0fc10297  auipc x5,0x0000fc10          547  	lw t0, p2_score
+0x00400440  0xbec2a283  lw x5,0xfffffbec(x5)              
+0x00400444  0x00a00313  addi x6,x0,10                548  	li t1, 10
+0x00400448  0x04628e63  beq x5,x6,0x0000005c         549  	beq t0, t1, end_game
+0x0040044c  0x03c0006f  jal x0,0x0000003c            551  	j play_point_sound
+0x00400450  0x0fc10297  auipc x5,0x0000fc10          555  	lw t0, p1_score
+0x00400454  0xbd42a283  lw x5,0xfffffbd4(x5)              
+0x00400458  0x00128293  addi x5,x5,1                 556  	addi t0, t0, 1
+0x0040045c  0x0fc10317  auipc x6,0x0000fc10          557  	sw t0, p1_score, t1
+0x00400460  0xbc532423  sw x5,0xfffffbc8(x6)              
+0x00400464  0xfff00293  addi x5,x0,0xffffffff        560  	li t0, -1
+0x00400468  0x0fc10317  auipc x6,0x0000fc10          561  	sw t0, ball_x_dir, t1
+0x0040046c  0xba532823  sw x5,0xfffffbb0(x6)              
+0x00400470  0x518010ef  jal x1,0x00001518            562  	jal clear_key_press
+0x00400474  0x0fc10297  auipc x5,0x0000fc10          564  	lw t0, p1_score
+0x00400478  0xbb02a283  lw x5,0xfffffbb0(x5)              
+0x0040047c  0x00a00313  addi x6,x0,10                565  	li t1, 10
+0x00400480  0x02628263  beq x5,x6,0x00000024         566  	beq t0 ,t1, end_game
+0x00400484  0x0040006f  jal x0,0x00000004            568  	j play_point_sound
+0x00400488  0x05000513  addi x10,x0,0x00000050       572  	li a0, 80
+0x0040048c  0x12c00593  addi x11,x0,0x0000012c       573  	li a1, 300
+0x00400490  0x07900613  addi x12,x0,0x00000079       574  	li a2, 121
+0x00400494  0x07f00693  addi x13,x0,0x0000007f       575  	li a3, 127
+0x00400498  0x01f00893  addi x17,x0,31               576  	li a7, 31
+0x0040049c  0x00000073  ecall                        577  	ecall
+0x004004a0  0xbbdff06f  jal x0,0xfffffbbc            579  	j new_round
+0x004004a4  0x690000ef  jal x1,0x00000690            583  	jal clear_board
+0x004004a8  0x0fc10297  auipc x5,0x0000fc10          585  	lw t0, p1_score
+0x004004ac  0xb7c2a283  lw x5,0xfffffb7c(x5)              
+0x004004b0  0x00a00313  addi x6,x0,10                586  	li t1, 10
+0x004004b4  0x04629e63  bne x5,x6,0x0000005c         587  	bne t0, t1, .player_2_wins
+0x004004b8  0x02100513  addi x10,x0,0x00000021       590  		li a0, 33
+0x004004bc  0x00500593  addi x11,x0,5                591  		li a1, 5
+0x004004c0  0x00158593  addi x11,x11,1               592  		addi a1, a1, 1
+0x004004c4  0x0fc10617  auipc x12,0x0000fc10         593  		lw a2, color_white
+0x004004c8  0xb3c62603  lw x12,0xfffffb3c(x12)            
+0x004004cc  0x5b8000ef  jal x1,0x000005b8            594  		jal draw_point
+0x004004d0  0x02100513  addi x10,x0,0x00000021       596  		li a0, 33
+0x004004d4  0x00150513  addi x10,x10,1               597  		addi a0, a0, 1
+0x004004d8  0x00500593  addi x11,x0,5                598  		li a1, 5
+0x004004dc  0x0fc10617  auipc x12,0x0000fc10         599  		lw a2, color_white
+0x004004e0  0xb2462603  lw x12,0xfffffb24(x12)            
+0x004004e4  0x00500693  addi x13,x0,5                600  		li a3, 5
+0x004004e8  0x00568693  addi x13,x13,5               601  		addi a3, a3, 5
+0x004004ec  0x600000ef  jal x1,0x00000600            602  		jal draw_vertical_line
+0x004004f0  0x02100513  addi x10,x0,0x00000021       604  		li a0, 33
+0x004004f4  0x00500593  addi x11,x0,5                605  		li a1, 5
+0x004004f8  0x00558593  addi x11,x11,5               606  		addi a1, a1, 5
+0x004004fc  0x0fc10617  auipc x12,0x0000fc10         607  		lw a2, color_white
+0x00400500  0xb0462603  lw x12,0xfffffb04(x12)            
+0x00400504  0x00250693  addi x13,x10,2               608  		addi a3, a0, 2
+0x00400508  0x59c000ef  jal x1,0x0000059c            609  		jal draw_horizontal_line
+0x0040050c  0x0c80006f  jal x0,0x000000c8            610  		j .win_p
+0x00400510  0x02100513  addi x10,x0,0x00000021       613  		li a0, 33
+0x00400514  0x00500593  addi x11,x0,5                614  		li a1, 5
+0x00400518  0x00158593  addi x11,x11,1               615  		addi a1, a1, 1
+0x0040051c  0x0fc10617  auipc x12,0x0000fc10         616  		lw a2, color_white
+0x00400520  0xae462603  lw x12,0xfffffae4(x12)            
+0x00400524  0x560000ef  jal x1,0x00000560            617  		jal draw_point
+0x00400528  0x02100513  addi x10,x0,0x00000021       619  		li a0, 33
+0x0040052c  0x00150513  addi x10,x10,1               620  		addi a0, a0, 1
+0x00400530  0x00500593  addi x11,x0,5                621  		li a1, 5
+0x00400534  0x0fc10617  auipc x12,0x0000fc10         622  		lw a2, color_white
+0x00400538  0xacc62603  lw x12,0xfffffacc(x12)            
+0x0040053c  0x00250693  addi x13,x10,2               623  		addi a3, a0, 2
+0x00400540  0x564000ef  jal x1,0x00000564            624  		jal draw_horizontal_line
+0x00400544  0x02100513  addi x10,x0,0x00000021       626  		li a0, 33
+0x00400548  0x00450513  addi x10,x10,4               627  		addi a0, a0, 4
+0x0040054c  0x00500593  addi x11,x0,5                628  		li a1, 5
+0x00400550  0x00158593  addi x11,x11,1               629  		addi a1, a1, 1
+0x00400554  0x0fc10617  auipc x12,0x0000fc10         630  		lw a2, color_white
+0x00400558  0xaac62603  lw x12,0xfffffaac(x12)            
+0x0040055c  0x528000ef  jal x1,0x00000528            631  		jal draw_point
+0x00400560  0x02100513  addi x10,x0,0x00000021       633  		li a0, 33
+0x00400564  0x00350513  addi x10,x10,3               634  		addi a0, a0, 3
+0x00400568  0x00500593  addi x11,x0,5                635  		li a1, 5
+0x0040056c  0x00258593  addi x11,x11,2               636  		addi a1, a1, 2
+0x00400570  0x0fc10617  auipc x12,0x0000fc10         637  		lw a2, color_white
+0x00400574  0xa9062603  lw x12,0xfffffa90(x12)            
+0x00400578  0x50c000ef  jal x1,0x0000050c            638  		jal draw_point
+0x0040057c  0x02100513  addi x10,x0,0x00000021       640  		li a0, 33
+0x00400580  0x00250513  addi x10,x10,2               641  		addi a0, a0, 2
+0x00400584  0x00500593  addi x11,x0,5                642  		li a1, 5
+0x00400588  0x00358593  addi x11,x11,3               643  		addi a1, a1, 3
+0x0040058c  0x0fc10617  auipc x12,0x0000fc10         644  		lw a2, color_white
+0x00400590  0xa7462603  lw x12,0xfffffa74(x12)            
+0x00400594  0x4f0000ef  jal x1,0x000004f0            645  		jal draw_point
+0x00400598  0x02100513  addi x10,x0,0x00000021       647  		li a0, 33
+0x0040059c  0x00150513  addi x10,x10,1               648  		addi a0, a0, 1
+0x004005a0  0x00500593  addi x11,x0,5                649  		li a1, 5
+0x004005a4  0x00458593  addi x11,x11,4               650  		addi a1, a1, 4
+0x004005a8  0x0fc10617  auipc x12,0x0000fc10         651  		lw a2, color_white
+0x004005ac  0xa5862603  lw x12,0xfffffa58(x12)            
+0x004005b0  0x4d4000ef  jal x1,0x000004d4            652  		jal draw_point
+0x004005b4  0x02100513  addi x10,x0,0x00000021       654  		li a0, 33
+0x004005b8  0x00500593  addi x11,x0,5                655  		li a1, 5
+0x004005bc  0x00558593  addi x11,x11,5               656  		addi a1, a1, 5
+0x004005c0  0x0fc10617  auipc x12,0x0000fc10         657  		lw a2, color_white
+0x004005c4  0xa4062603  lw x12,0xfffffa40(x12)            
+0x004005c8  0x00450693  addi x13,x10,4               658  		addi a3, a0, 4
+0x004005cc  0x4d8000ef  jal x1,0x000004d8            659  		jal draw_horizontal_line
+0x004005d0  0x0040006f  jal x0,0x00000004            661  		j .win_p
+0x004005d4  0x01a00513  addi x10,x0,26               664  		li a0, 26
+0x004005d8  0x00500593  addi x11,x0,5                665  		li a1, 5
+0x004005dc  0x0fc10617  auipc x12,0x0000fc10         666  		lw a2, color_white
+0x004005e0  0xa2462603  lw x12,0xfffffa24(x12)            
+0x004005e4  0x00500693  addi x13,x0,5                667  		li a3, 5
+0x004005e8  0x00568693  addi x13,x13,5               668  		addi a3, a3, 5
+0x004005ec  0x500000ef  jal x1,0x00000500            669  		jal draw_vertical_line
+0x004005f0  0x01a00513  addi x10,x0,26               671  		li a0, 26
+0x004005f4  0x00450513  addi x10,x10,4               672  		addi a0, a0, 4
+0x004005f8  0x00500593  addi x11,x0,5                673  		li a1, 5
+0x004005fc  0x00158593  addi x11,x11,1               674  		addi a1, a1, 1
+0x00400600  0x0fc10617  auipc x12,0x0000fc10         675  		lw a2, color_white
+0x00400604  0xa0062603  lw x12,0xfffffa00(x12)            
+0x00400608  0x00258693  addi x13,x11,2               676  		addi a3, a1, 2
+0x0040060c  0x4e0000ef  jal x1,0x000004e0            677  		jal draw_vertical_line
+0x00400610  0x01a00513  addi x10,x0,26               679  		li a0, 26
+0x00400614  0x00150513  addi x10,x10,1               680  		addi a0, a0, 1
+0x00400618  0x00500593  addi x11,x0,5                681  		li a1, 5
+0x0040061c  0x00358593  addi x11,x11,3               682  		addi a1, a1, 3
+0x00400620  0x0fc10617  auipc x12,0x0000fc10         683  		lw a2, color_white
+0x00400624  0x9e062603  lw x12,0xfffff9e0(x12)            
+0x00400628  0x00250693  addi x13,x10,2               684  		addi a3, a0, 2
+0x0040062c  0x478000ef  jal x1,0x00000478            685  		jal draw_horizontal_line
+0x00400630  0x01a00513  addi x10,x0,26               687  		li a0, 26
+0x00400634  0x00150513  addi x10,x10,1               688  		addi a0, a0, 1
+0x00400638  0x00500593  addi x11,x0,5                689  		li a1, 5
+0x0040063c  0x0fc10617  auipc x12,0x0000fc10         690  		lw a2, color_white
+0x00400640  0x9c462603  lw x12,0xfffff9c4(x12)            
+0x00400644  0x00350693  addi x13,x10,3               691  		addi a3, a0, 3
+0x00400648  0x45c000ef  jal x1,0x0000045c            692  		jal draw_horizontal_line
+0x0040064c  0x01500513  addi x10,x0,21               696  		li a0, 21
+0x00400650  0x01000593  addi x11,x0,16               697  		li a1, 16
+0x00400654  0x0fc10617  auipc x12,0x0000fc10         698  		lw a2, color_white
+0x00400658  0x9ac62603  lw x12,0xfffff9ac(x12)            
+0x0040065c  0x00258693  addi x13,x11,2               699  		addi a3, a1, 2
+0x00400660  0x48c000ef  jal x1,0x0000048c            700  		jal draw_vertical_line
+0x00400664  0x01500513  addi x10,x0,21               702  		li a0, 21
+0x00400668  0x00150513  addi x10,x10,1               703  		addi a0, a0, 1
+0x0040066c  0x01000593  addi x11,x0,16               704  		li a1, 16
+0x00400670  0x00358593  addi x11,x11,3               705  		addi a1, a1, 3
+0x00400674  0x0fc10617  auipc x12,0x0000fc10         706  		lw a2, color_white
+0x00400678  0x98c62603  lw x12,0xfffff98c(x12)            
+0x0040067c  0x00158693  addi x13,x11,1               707  		addi a3, a1, 1
+0x00400680  0x46c000ef  jal x1,0x0000046c            708  		jal draw_vertical_line
+0x00400684  0x01500513  addi x10,x0,21               710  		li a0, 21
+0x00400688  0x00250513  addi x10,x10,2               711  		addi a0, a0, 2
+0x0040068c  0x01000593  addi x11,x0,16               712  		li a1, 16
+0x00400690  0x00558593  addi x11,x11,5               713  		addi a1, a1, 5
+0x00400694  0x0fc10617  auipc x12,0x0000fc10         714  		lw a2, color_white
+0x00400698  0x96c62603  lw x12,0xfffff96c(x12)            
+0x0040069c  0x3e8000ef  jal x1,0x000003e8            715  		jal draw_point
+0x004006a0  0x01500513  addi x10,x0,21               717  		li a0, 21
+0x004006a4  0x00350513  addi x10,x10,3               718  		addi a0, a0, 3
+0x004006a8  0x01000593  addi x11,x0,16               719  		li a1, 16
+0x004006ac  0x00358593  addi x11,x11,3               720  		addi a1, a1, 3
+0x004006b0  0x0fc10617  auipc x12,0x0000fc10         721  		lw a2, color_white
+0x004006b4  0x95062603  lw x12,0xfffff950(x12)            
+0x004006b8  0x00158693  addi x13,x11,1               722  		addi a3, a1, 1
+0x004006bc  0x430000ef  jal x1,0x00000430            723  		jal draw_vertical_line
+0x004006c0  0x01500513  addi x10,x0,21               725  		li a0, 21
+0x004006c4  0x00450513  addi x10,x10,4               726  		addi a0, a0, 4
+0x004006c8  0x01000593  addi x11,x0,16               727  		li a1, 16
+0x004006cc  0x00558593  addi x11,x11,5               728  		addi a1, a1, 5
+0x004006d0  0x0fc10617  auipc x12,0x0000fc10         729  		lw a2, color_white
+0x004006d4  0x93062603  lw x12,0xfffff930(x12)            
+0x004006d8  0x3ac000ef  jal x1,0x000003ac            730  		jal draw_point
+0x004006dc  0x01500513  addi x10,x0,21               732  		li a0, 21
+0x004006e0  0x00550513  addi x10,x10,5               733  		addi a0, a0, 5
+0x004006e4  0x01000593  addi x11,x0,16               734  		li a1, 16
+0x004006e8  0x00358593  addi x11,x11,3               735  		addi a1, a1, 3
+0x004006ec  0x0fc10617  auipc x12,0x0000fc10         736  		lw a2, color_white
+0x004006f0  0x91462603  lw x12,0xfffff914(x12)            
+0x004006f4  0x00158693  addi x13,x11,1               737  		addi a3, a1, 1
+0x004006f8  0x3f4000ef  jal x1,0x000003f4            738  		jal draw_vertical_line
+0x004006fc  0x01500513  addi x10,x0,21               740  		li a0, 21
+0x00400700  0x00650513  addi x10,x10,6               741  		addi a0, a0, 6
+0x00400704  0x01000593  addi x11,x0,16               742  		li a1, 16
+0x00400708  0x0fc10617  auipc x12,0x0000fc10         743  		lw a2, color_white
+0x0040070c  0x8f862603  lw x12,0xfffff8f8(x12)            
+0x00400710  0x00258693  addi x13,x11,2               744  		addi a3, a1, 2
+0x00400714  0x3d8000ef  jal x1,0x000003d8            745  		jal draw_vertical_line
+0x00400718  0x01500513  addi x10,x0,21               749  		li a0, 21
+0x0040071c  0x00850513  addi x10,x10,8               750  		addi a0, a0, 8
+0x00400720  0x01000593  addi x11,x0,16               751  		li a1, 16
+0x00400724  0x0fc10617  auipc x12,0x0000fc10         752  		lw a2, color_white
+0x00400728  0x8dc62603  lw x12,0xfffff8dc(x12)            
+0x0040072c  0x00450693  addi x13,x10,4               753  		addi a3, a0, 4 
+0x00400730  0x374000ef  jal x1,0x00000374            754  		jal draw_horizontal_line
+0x00400734  0x01500513  addi x10,x0,21               756  		li a0, 21
+0x00400738  0x00850513  addi x10,x10,8               757  		addi a0, a0, 8
+0x0040073c  0x00250513  addi x10,x10,2               758  		addi a0, a0, 2
+0x00400740  0x01000593  addi x11,x0,16               759  		li a1, 16
+0x00400744  0x0fc10617  auipc x12,0x0000fc10         760  		lw a2, color_white
+0x00400748  0x8bc62603  lw x12,0xfffff8bc(x12)            
+0x0040074c  0x00558693  addi x13,x11,5               761  		addi a3, a1, 5
+0x00400750  0x39c000ef  jal x1,0x0000039c            762  		jal draw_vertical_line
+0x00400754  0x01500513  addi x10,x0,21               764  		li a0, 21
+0x00400758  0x00850513  addi x10,x10,8               765  		addi a0, a0, 8
+0x0040075c  0x01000593  addi x11,x0,16               766  		li a1, 16
+0x00400760  0x00558593  addi x11,x11,5               767  		addi a1, a1, 5
+0x00400764  0x0fc10617  auipc x12,0x0000fc10         768  		lw a2, color_white
+0x00400768  0x89c62603  lw x12,0xfffff89c(x12)            
+0x0040076c  0x00450693  addi x13,x10,4               769  		addi a3, a0, 4 
+0x00400770  0x334000ef  jal x1,0x00000334            770  		jal draw_horizontal_line
+0x00400774  0x01500513  addi x10,x0,21               775  		li a0, 21
+0x00400778  0x00e50513  addi x10,x10,14              776  		addi a0, a0, 14
+0x0040077c  0x01000593  addi x11,x0,16               777  		li a1, 16
+0x00400780  0x0fc10617  auipc x12,0x0000fc10         778  		lw a2, color_white
+0x00400784  0x88062603  lw x12,0xfffff880(x12)            
+0x00400788  0x00558693  addi x13,x11,5               779  		addi a3, a1, 5
+0x0040078c  0x360000ef  jal x1,0x00000360            780  		jal draw_vertical_line
+0x00400790  0x01500513  addi x10,x0,21               782  		li a0, 21
+0x00400794  0x00e50513  addi x10,x10,14              783  		addi a0, a0, 14
+0x00400798  0x00150513  addi x10,x10,1               784  		addi a0, a0, 1
+0x0040079c  0x01000593  addi x11,x0,16               785  		li a1, 16
+0x004007a0  0x0fc10617  auipc x12,0x0000fc10         786  		lw a2, color_white
+0x004007a4  0x86062603  lw x12,0xfffff860(x12)            
+0x004007a8  0x00158693  addi x13,x11,1               787  		addi a3, a1, 1
+0x004007ac  0x340000ef  jal x1,0x00000340            788  		jal draw_vertical_line
+0x004007b0  0x01500513  addi x10,x0,21               790  		li a0, 21
+0x004007b4  0x00e50513  addi x10,x10,14              791  		addi a0, a0, 14
+0x004007b8  0x00250513  addi x10,x10,2               792  		addi a0, a0, 2
+0x004007bc  0x01000593  addi x11,x0,16               793  		li a1, 16
+0x004007c0  0x00258593  addi x11,x11,2               794  		addi a1, a1, 2
+0x004007c4  0x0fc10617  auipc x12,0x0000fc10         795  		lw a2, color_white
+0x004007c8  0x83c62603  lw x12,0xfffff83c(x12)            
+0x004007cc  0x00158693  addi x13,x11,1               796  		addi a3, a1, 1
+0x004007d0  0x31c000ef  jal x1,0x0000031c            797  		jal draw_vertical_line
+0x004007d4  0x01500513  addi x10,x0,21               799  		li a0, 21
+0x004007d8  0x00e50513  addi x10,x10,14              800  		addi a0, a0, 14
+0x004007dc  0x00350513  addi x10,x10,3               801  		addi a0, a0, 3
+0x004007e0  0x01000593  addi x11,x0,16               802  		li a1, 16
+0x004007e4  0x00458593  addi x11,x11,4               803  		addi a1, a1, 4
+0x004007e8  0x0fc10617  auipc x12,0x0000fc10         804  		lw a2, color_white
+0x004007ec  0x81862603  lw x12,0xfffff818(x12)            
+0x004007f0  0x00158693  addi x13,x11,1               805  		addi a3, a1, 1
+0x004007f4  0x2f8000ef  jal x1,0x000002f8            806  		jal draw_vertical_line
+0x004007f8  0x01500513  addi x10,x0,21               808  		li a0, 21
+0x004007fc  0x00e50513  addi x10,x10,14              809  		addi a0, a0, 14
+0x00400800  0x00450513  addi x10,x10,4               810  		addi a0, a0, 4
+0x00400804  0x01000593  addi x11,x0,16               811  		li a1, 16
+0x00400808  0x0fc0f617  auipc x12,0x0000fc0f         812  		lw a2, color_white
+0x0040080c  0x7f862603  lw x12,0x000007f8(x12)            
+0x00400810  0x00558693  addi x13,x11,5               813  		addi a3, a1, 5
+0x00400814  0x2d8000ef  jal x1,0x000002d8            814  		jal draw_vertical_line
+0x00400818  0x01500513  addi x10,x0,21               818  		li a0, 21
+0x0040081c  0x01450513  addi x10,x10,20              819  		addi a0, a0, 20
+0x00400820  0x01000593  addi x11,x0,16               820  		li a1, 16
+0x00400824  0x0fc0f617  auipc x12,0x0000fc0f         821  		lw a2, color_white
+0x00400828  0x7dc62603  lw x12,0x000007dc(x12)            
+0x0040082c  0x00450693  addi x13,x10,4               822  		addi a3, a0, 4
+0x00400830  0x274000ef  jal x1,0x00000274            823  		jal draw_horizontal_line
+0x00400834  0x01500513  addi x10,x0,21               825  		li a0, 21
+0x00400838  0x01450513  addi x10,x10,20              826  		addi a0, a0, 20
+0x0040083c  0x01000593  addi x11,x0,16               827  		li a1, 16
+0x00400840  0x0fc0f617  auipc x12,0x0000fc0f         828  		lw a2, color_white
+0x00400844  0x7c062603  lw x12,0x000007c0(x12)            
+0x00400848  0x00158693  addi x13,x11,1               829  		addi a3, a1, 1
+0x0040084c  0x2a0000ef  jal x1,0x000002a0            830  		jal draw_vertical_line
+0x00400850  0x01500513  addi x10,x0,21               832  		li a0, 21
+0x00400854  0x01450513  addi x10,x10,20              833  		addi a0, a0, 20
+0x00400858  0x01000593  addi x11,x0,16               834  		li a1, 16
+0x0040085c  0x00258593  addi x11,x11,2               835  		addi a1, a1, 2
+0x00400860  0x0fc0f617  auipc x12,0x0000fc0f         836  		lw a2, color_white
+0x00400864  0x7a062603  lw x12,0x000007a0(x12)            
+0x00400868  0x00250693  addi x13,x10,2               837  		addi a3, a0, 2
+0x0040086c  0x238000ef  jal x1,0x00000238            838  		jal draw_horizontal_line
+0x00400870  0x01500513  addi x10,x0,21               840  		li a0, 21
+0x00400874  0x01450513  addi x10,x10,20              841  		addi a0, a0, 20
+0x00400878  0x00250513  addi x10,x10,2               842  		addi a0, a0, 2
+0x0040087c  0x01000593  addi x11,x0,16               843  		li a1, 16
+0x00400880  0x00358593  addi x11,x11,3               844  		addi a1, a1, 3
+0x00400884  0x0fc0f617  auipc x12,0x0000fc0f         845  		lw a2, color_white
+0x00400888  0x77c62603  lw x12,0x0000077c(x12)            
+0x0040088c  0x00150693  addi x13,x10,1               846  		addi a3, a0, 1
+0x00400890  0x214000ef  jal x1,0x00000214            847  		jal draw_horizontal_line
+0x00400894  0x01500513  addi x10,x0,21               849  		li a0, 21
+0x00400898  0x01450513  addi x10,x10,20              850  		addi a0, a0, 20
+0x0040089c  0x00450513  addi x10,x10,4               851  		addi a0, a0, 4
+0x004008a0  0x01000593  addi x11,x0,16               852  		li a1, 16
+0x004008a4  0x00358593  addi x11,x11,3               853  		addi a1, a1, 3
+0x004008a8  0x0fc0f617  auipc x12,0x0000fc0f         854  		lw a2, color_white
+0x004008ac  0x75862603  lw x12,0x00000758(x12)            
+0x004008b0  0x00258693  addi x13,x11,2               855  		addi a3, a1, 2
+0x004008b4  0x238000ef  jal x1,0x00000238            856  		jal draw_vertical_line
+0x004008b8  0x01500513  addi x10,x0,21               858  		li a0, 21
+0x004008bc  0x01450513  addi x10,x10,20              859  		addi a0, a0, 20
+0x004008c0  0x01000593  addi x11,x0,16               860  		li a1, 16
+0x004008c4  0x00558593  addi x11,x11,5               861  		addi a1, a1, 5
+0x004008c8  0x0fc0f617  auipc x12,0x0000fc0f         862  		lw a2, color_white
+0x004008cc  0x73862603  lw x12,0x00000738(x12)            
+0x004008d0  0x00450693  addi x13,x10,4               863  		addi a3, a0, 4
+0x004008d4  0x1d0000ef  jal x1,0x000001d0            864  		jal draw_horizontal_line
+0x004008d8  0x00001537  lui x10,1                    867  		li a0, 3000
+0x004008dc  0xbb850513  addi x10,x10,0xfffffbb8           
+0x004008e0  0x02000893  addi x17,x0,0x00000020       868  		li a7, 32	
+0x004008e4  0x00000073  ecall                        869  		ecall		#Pause for 100 milisec
+0x004008e8  0x0ac010ef  jal x1,0x000010ac            871  	jal clear_key_status
+0x004008ec  0x00a00513  addi x10,x0,10               874  		li a0, 10
+0x004008f0  0x02000893  addi x17,x0,0x00000020       875  		li a7, 32 
+0x004008f4  0x00000073  ecall                        876  		ecall		#Pause for 100 milisec
+0x004008f8  0xffff02b7  lui x5,0xfffffff0            878  		li t0, 0xFFFF0000
+0x004008fc  0x00028293  addi x5,x5,0                      
+0x00400900  0xfe0286e3  beq x5,x0,0xffffffec         879  		beq t0, zero, .reset_wait
+0x00400904  0x0040006f  jal x0,0x00000004            881  		j .reset
+0x00400908  0x0fc0f297  auipc x5,0x0000fc0f          884  		sw zero, p1_score, t0
+0x0040090c  0x7002ae23  sw x0,0x0000071c(x5)              
+0x00400910  0x0fc0f297  auipc x5,0x0000fc0f          885  		sw zero, p2_score, t0
+0x00400914  0x7002ac23  sw x0,0x00000718(x5)              
+0x00400918  0x07c010ef  jal x1,0x0000107c            886  		jal clear_key_status
+0x0040091c  0x06c010ef  jal x1,0x0000106c            887  		jal clear_key_press
+0x00400920  0x214000ef  jal x1,0x00000214            889  		jal clear_board
+0x00400924  0xedcff06f  jal x0,0xfffff6dc            891  		j new_game
+0x00400928  0xfec10113  addi x2,x2,0xffffffec        905  	addi sp, sp -20
+0x0040092c  0x00112023  sw x1,0(x2)                  906  	sw ra, 0(sp)
+0x00400930  0x00812223  sw x8,4(x2)                  907  	sw s0, 4(sp)
+0x00400934  0x00912423  sw x9,8(x2)                  908  	sw s1, 8(sp)
+0x00400938  0x01212623  sw x18,12(x2)                909  	sw s2, 12(sp)
+0x0040093c  0x01312823  sw x19,16(x2)                910  	sw s3, 16(sp)
+0x00400940  0x00a00433  add x8,x0,x10                912  	mv s0, a0
+0x00400944  0x00b004b3  add x9,x0,x11                913  	mv s1, a1
+0x00400948  0x00c00933  add x18,x0,x12               914  	mv s2, a2
+0x0040094c  0x00d009b3  add x19,x0,x13               915  	mv s3, a3
+0x00400950  0x00000293  addi x5,x0,0                 917  	li t0, 0
+0x00400954  0x05328c63  beq x5,x19,0x00000058        918  	beq t0, s3, .no_mov
+0x00400958  0x00200293  addi x5,x0,2                 919  	li t0, 2
+0x0040095c  0x03328663  beq x5,x19,0x0000002c        920  	beq t0, s3, .down
+0x00400960  0x00800533  add x10,x0,x8                926  		mv a0, s0
+0x00400964  0x009005b3  add x11,x0,x9                927  		mv a1, s1 
+0x00400968  0x00558593  addi x11,x11,5               928  		addi a1, a1, 5
+0x0040096c  0x0fc0f617  auipc x12,0x0000fc0f         929  		lw a2, color_black
+0x00400970  0x69862603  lw x12,0x00000698(x12)            
+0x00400974  0x110000ef  jal x1,0x00000110            930  		jal draw_point
+0x00400978  0x00000293  addi x5,x0,0                 932  		li t0, 0
+0x0040097c  0x02548863  beq x9,x5,0x00000030         933  		beq s1, t0, .no_mov
+0x00400980  0xfff48493  addi x9,x9,0xffffffff        934  		addi s1, s1, -1
+0x00400984  0x02c0006f  jal x0,0x0000002c            935  		j .move
+0x00400988  0x00800533  add x10,x0,x8                939  		mv a0, s0
+0x0040098c  0x009005b3  add x11,x0,x9                940  		mv a1, s1
+0x00400990  0x0fc0f617  auipc x12,0x0000fc0f         941  		lw a2, color_black
+0x00400994  0x67462603  lw x12,0x00000674(x12)            
+0x00400998  0x0ec000ef  jal x1,0x000000ec            942  		jal draw_point
+0x0040099c  0x01a00293  addi x5,x0,26                944  		li t0, 26
+0x004009a0  0x00548663  beq x9,x5,0x0000000c         945  		beq s1, t0, .no_mov
+0x004009a4  0x00148493  addi x9,x9,1                 946  		addi s1, s1, 1
+0x004009a8  0x0080006f  jal x0,0x00000008            947  		j .move
+0x004009ac  0x00000993  addi x19,x0,0                951  		li s3, 0
+0x004009b0  0x00800533  add x10,x0,x8                954  		mv a0, s0
+0x004009b4  0x009005b3  add x11,x0,x9                955  		mv a1, s1
+0x004009b8  0x01200633  add x12,x0,x18               956  		mv a2, s2
+0x004009bc  0x00500293  addi x5,x0,5                 957  		li t0, 5
+0x004009c0  0x005586b3  add x13,x11,x5               958  		add a3, a1, t0
+0x004009c4  0x128000ef  jal x1,0x00000128            959  		jal draw_vertical_line
+0x004009c8  0x00900533  add x10,x0,x9                961  	mv a0, s1
+0x004009cc  0x013005b3  add x11,x0,x19               962  	mv a1, s3
+0x004009d0  0x00012083  lw x1,0(x2)                  964  	lw ra, 0(sp)
+0x004009d4  0x00412403  lw x8,4(x2)                  965  	lw s0, 4(sp)
+0x004009d8  0x00812483  lw x9,8(x2)                  966  	lw s1, 8(sp)
+0x004009dc  0x00c12903  lw x18,12(x2)                967  	lw s2, 12(sp)
+0x004009e0  0x01012983  lw x19,16(x2)                968  	lw s3, 16(sp)
+0x004009e4  0x01410113  addi x2,x2,20                969  	addi sp, sp 20
+0x004009e8  0x00008067  jalr x0,x1,0                 971  	jr ra
+0x004009ec  0xff010113  addi x2,x2,0xfffffff0        980  	addi sp, sp, -16
+0x004009f0  0x00112023  sw x1,0(x2)                  981  	sw ra, 0(sp)
+0x004009f4  0x00812223  sw x8,4(x2)                  982  	sw s0, 4(sp)
+0x004009f8  0x00912423  sw x9,8(x2)                  983  	sw s1, 8(sp)
+0x004009fc  0x00a12623  sw x10,12(x2)                984  	sw a0, 12(sp)
+0x00400a00  0x00a00433  add x8,x0,x10                986  	mv s0, a0
+0x00400a04  0x00b004b3  add x9,x0,x11                987  	mv s1, a1
+0x00400a08  0x00500293  addi x5,x0,5                 988  	li t0, 5
+0x00400a0c  0x0282da63  bge x5,x8,0x00000034         989  	ble s0, t0, .score_row_1
+0x00400a10  0x00600293  addi x5,x0,6                 992  	li  t0, 6
+0x00400a14  0x405402b3  sub x5,x8,x5                 993  	sub t0, s0, t0
+0x00400a18  0x00100313  addi x6,x0,1                 994  	li t1, 1
+0x00400a1c  0x006292b3  sll x5,x5,x6                 995  	sll t0, t0, t1
+0x00400a20  0x00928533  add x10,x5,x9                996  	add a0, t0, s1 
+0x00400a24  0x00300593  addi x11,x0,3                997  	li a1, 3
+0x00400a28  0x0fc0f617  auipc x12,0x0000fc0f         998  	lw a2, color_white 
+0x00400a2c  0x5d862603  lw x12,0x000005d8(x12)            
+0x00400a30  0x054000ef  jal x1,0x00000054            999  	jal draw_point
+0x00400a34  0xfff40413  addi x8,x8,0xffffffff        1001 	addi s0, s0, -1
+0x00400a38  0x00600293  addi x5,x0,6                 1002 	li t0, 6
+0x00400a3c  0xfc545ae3  bge x8,x5,0xffffffd4         1003 	bge s0, t0, .score_row_2
+0x00400a40  0x02040663  beq x8,x0,0x0000002c         1006 	beq s0, zero, .score_end
+0x00400a44  0xfff40293  addi x5,x8,0xffffffff        1007 	addi t0, s0, -1
+0x00400a48  0x00100313  addi x6,x0,1                 1008 	li t1, 1 # I put the number here directly without label because its use is evident
+0x00400a4c  0x006292b3  sll x5,x5,x6                 1009 	sll t0, t0, t1
+0x00400a50  0x00928533  add x10,x5,x9                1010 	add a0, t0, s1 
+0x00400a54  0x00100593  addi x11,x0,1                1011 	li a1, 1
+0x00400a58  0x0fc0f617  auipc x12,0x0000fc0f         1012 	lw a2, color_white 
+0x00400a5c  0x5a862603  lw x12,0x000005a8(x12)            
+0x00400a60  0x024000ef  jal x1,0x00000024            1013 	jal draw_point
+0x00400a64  0xfff40413  addi x8,x8,0xffffffff        1015 	addi s0, s0, -1
+0x00400a68  0xfd9ff06f  jal x0,0xffffffd8            1016 	j .score_row_1
+0x00400a6c  0x00012083  lw x1,0(x2)                  1019 	lw ra, 0(sp)
+0x00400a70  0x00412403  lw x8,4(x2)                  1020 	lw s0, 4(sp)
+0x00400a74  0x00812483  lw x9,8(x2)                  1021 	lw s1, 8(sp)
+0x00400a78  0x00c12503  lw x10,12(x2)                1022 	lw a0, 12(sp)
+0x00400a7c  0x01010113  addi x2,x2,16                1023 	addi sp, sp, 16
+0x00400a80  0x00008067  jalr x0,x1,0                 1025 	jr ra
+0x00400a84  0x00600293  addi x5,x0,6                 1036 	li t0, 6
+0x00400a88  0x005592b3  sll x5,x11,x5                1037 	sll t0, a1, t0 #Due to the size of the screen, multiply y coodinate by 64 (length of the field)
+0x00400a8c  0x00550333  add x6,x10,x5                1038 	add t1, a0, t0
+0x00400a90  0x00200293  addi x5,x0,2                 1039 	li t0, 2
+0x00400a94  0x00531333  sll x6,x6,x5                 1040 	sll t1, t1, t0 # Multiply the resulting coodinate by 4
+0x00400a98  0x00330333  add x6,x6,x3                 1041 	add t1, t1, gp
+0x00400a9c  0x00c32023  sw x12,0(x6)                 1042 	sw a2, (t1)
+0x00400aa0  0x00008067  jalr x0,x1,0                 1043 	jr ra
+0x00400aa4  0xff010113  addi x2,x2,0xfffffff0        1056 	addi sp, sp, -16
+0x00400aa8  0x00112023  sw x1,0(x2)                  1057 	sw ra, 0(sp)
+0x00400aac  0x00812223  sw x8,4(x2)                  1058 	sw s0, 4(sp)
+0x00400ab0  0x00912423  sw x9,8(x2)                  1059 	sw s1, 8(sp)
+0x00400ab4  0x01212623  sw x18,12(x2)                1060 	sw s2, 12(sp)
+0x00400ab8  0x40a68433  sub x8,x13,x10               1062 	sub s0, a3, a0
+0x00400abc  0x00a004b3  add x9,x0,x10                1063 	mv s1, a0
+0x00400ac0  0x00000913  addi x18,x0,0                1064 	li s2, 0
+0x00400ac4  0x00848533  add x10,x9,x8                1067 		add a0, s1, s0
+0x00400ac8  0xfbdff0ef  jal x1,0xffffffbc            1068 		jal draw_point
+0x00400acc  0xfff40413  addi x8,x8,0xffffffff        1069 		addi s0, s0, -1
+0x00400ad0  0xff245ae3  bge x8,x18,0xfffffff4        1071 		bge s0, s2, .horizontal_loop
+0x00400ad4  0x00012083  lw x1,0(x2)                  1073 	lw ra, 0(sp)
+0x00400ad8  0x00412403  lw x8,4(x2)                  1074 	lw s0, 4(sp)
+0x00400adc  0x00812483  lw x9,8(x2)                  1075 	lw s1, 8(sp)
+0x00400ae0  0x00c12903  lw x18,12(x2)                1076 	lw s2, 12(sp)
+0x00400ae4  0x01010113  addi x2,x2,16                1077 	addi sp, sp, 16	
+0x00400ae8  0x00008067  jalr x0,x1,0                 1079 	jr ra
+0x00400aec  0xff010113  addi x2,x2,0xfffffff0        1091 	addi sp, sp, -16
+0x00400af0  0x00112023  sw x1,0(x2)                  1092 	sw ra, 0(sp)
+0x00400af4  0x00812223  sw x8,4(x2)                  1093 	sw s0, 4(sp)
+0x00400af8  0x00912423  sw x9,8(x2)                  1094 	sw s1, 8(sp)
+0x00400afc  0x01212623  sw x18,12(x2)                1095 	sw s2, 12(sp)
+0x00400b00  0x40b68433  sub x8,x13,x11               1097 	sub s0, a3, a1
+0x00400b04  0x00b004b3  add x9,x0,x11                1098 	mv s1, a1
+0x00400b08  0x00000913  addi x18,x0,0                1099 	li s2, 0
+0x00400b0c  0x008485b3  add x11,x9,x8                1102 		add a1, s1, s0
+0x00400b10  0xf75ff0ef  jal x1,0xffffff74            1103 		jal draw_point
+0x00400b14  0xfff40413  addi x8,x8,0xffffffff        1104 		addi s0, s0, -1
+0x00400b18  0xff245ae3  bge x8,x18,0xfffffff4        1106 		bge s0, s2, .vertical_loop
+0x00400b1c  0x00012083  lw x1,0(x2)                  1108 	lw ra, 0(sp)
+0x00400b20  0x00412403  lw x8,4(x2)                  1109 	lw s0, 4(sp)
+0x00400b24  0x00812483  lw x9,8(x2)                  1110 	lw s1, 8(sp)
+0x00400b28  0x00c12903  lw x18,12(x2)                1111 	lw s2, 12(sp)
+0x00400b2c  0x01010113  addi x2,x2,16                1113 	addi sp, sp, 16	
+0x00400b30  0x00008067  jalr x0,x1,0                 1115 	jr ra
+0x00400b34  0x0fc0f297  auipc x5,0x0000fc0f          1123 	lw t0, color_black
+0x00400b38  0x4d02a283  lw x5,0x000004d0(x5)              
+0x00400b3c  0x00002337  lui x6,2                     1124 	li t1, 8192
+0x00400b40  0x00030313  addi x6,x6,0                      
+0x00400b44  0x00400393  addi x7,x0,4                 1125 	li t2, 4
+0x00400b48  0x40730333  sub x6,x6,x7                 1128 		sub t1, t1, t2
+0x00400b4c  0x00330e33  add x28,x6,x3                1129 		add t3, t1, gp
+0x00400b50  0x005e2023  sw x5,0(x28)                 1130 		sw t0, (t3)
+0x00400b54  0x00030463  beq x6,x0,0x00000008         1131 		beqz t1, .end_clear_loop
+0x00400b58  0xff1ff06f  jal x0,0xfffffff0            1132 		j .start_clear_loop
+0x00400b5c  0x00008067  jalr x0,x1,0                 1136 	jr ra
+0x00400b60  0xffc10113  addi x2,x2,0xfffffffc        1145 	addi sp, sp, -4
+0x00400b64  0x00112023  sw x1,0(x2)                  1146 	sw ra, 0(sp)
+0x00400b68  0x00a00513  addi x10,x0,10               1149 	li a0, 10
+0x00400b6c  0x00100593  addi x11,x0,1                1150 	li a1, 1
+0x00400b70  0x0fc0f617  auipc x12,0x0000fc0f         1151 	lw a2, color_red
+0x00400b74  0x49862603  lw x12,0x00000498(x12)            
+0x00400b78  0x03500693  addi x13,x0,0x00000035       1152 	li a3, 53
+0x00400b7c  0xf29ff0ef  jal x1,0xffffff28            1153 	jal draw_horizontal_line
+0x00400b80  0x00a00513  addi x10,x0,10               1155 	li a0, 10
+0x00400b84  0x00100593  addi x11,x0,1                1156 	li a1, 1
+0x00400b88  0x00158593  addi x11,x11,1               1157 	addi a1, a1, 1
+0x00400b8c  0x0fc0f617  auipc x12,0x0000fc0f         1158 	lw a2, color_cyan
+0x00400b90  0x48062603  lw x12,0x00000480(x12)            
+0x00400b94  0x03500693  addi x13,x0,0x00000035       1159 	li a3, 53
+0x00400b98  0xf0dff0ef  jal x1,0xffffff0c            1160 	jal draw_horizontal_line
+0x00400b9c  0x00a00513  addi x10,x0,10               1162 	li a0, 10
+0x00400ba0  0x00100593  addi x11,x0,1                1163 	li a1, 1
+0x00400ba4  0x00258593  addi x11,x11,2               1164 	addi a1, a1, 2
+0x00400ba8  0x0fc0f617  auipc x12,0x0000fc0f         1165 	lw a2, color_orange
+0x00400bac  0x46862603  lw x12,0x00000468(x12)            
+0x00400bb0  0x03500693  addi x13,x0,0x00000035       1166 	li a3, 53
+0x00400bb4  0xef1ff0ef  jal x1,0xfffffef0            1167 	jal draw_horizontal_line
+0x00400bb8  0x00a00513  addi x10,x0,10               1170 	li a0, 10
+0x00400bbc  0x00c00593  addi x11,x0,12               1171 	li a1, 12
+0x00400bc0  0x0fc0f617  auipc x12,0x0000fc0f         1172 	lw a2, color_red
+0x00400bc4  0x44862603  lw x12,0x00000448(x12)            
+0x00400bc8  0x03500693  addi x13,x0,0x00000035       1173 	li a3, 53
+0x00400bcc  0xed9ff0ef  jal x1,0xfffffed8            1174 	jal draw_horizontal_line
+0x00400bd0  0x00a00513  addi x10,x0,10               1176 	li a0, 10
+0x00400bd4  0x00c00593  addi x11,x0,12               1177 	li a1, 12
+0x00400bd8  0x00158593  addi x11,x11,1               1178 	addi a1, a1, 1
+0x00400bdc  0x0fc0f617  auipc x12,0x0000fc0f         1179 	lw a2, color_cyan
+0x00400be0  0x43062603  lw x12,0x00000430(x12)            
+0x00400be4  0x03500693  addi x13,x0,0x00000035       1180 	li a3, 53
+0x00400be8  0xebdff0ef  jal x1,0xfffffebc            1181 	jal draw_horizontal_line
+0x00400bec  0x00a00513  addi x10,x0,10               1183 	li a0, 10
+0x00400bf0  0x00c00593  addi x11,x0,12               1184 	li a1, 12
+0x00400bf4  0x00258593  addi x11,x11,2               1185 	addi a1, a1, 2
+0x00400bf8  0x0fc0f617  auipc x12,0x0000fc0f         1186 	lw a2, color_orange
+0x00400bfc  0x41862603  lw x12,0x00000418(x12)            
+0x00400c00  0x03500693  addi x13,x0,0x00000035       1187 	li a3, 53
+0x00400c04  0xea1ff0ef  jal x1,0xfffffea0            1188 	jal draw_horizontal_line
+0x00400c08  0x01500513  addi x10,x0,21               1192 	li a0, 21
+0x00400c0c  0x00500593  addi x11,x0,5                1193 	li a1, 5
+0x00400c10  0x0fc0f617  auipc x12,0x0000fc0f         1194 	lw a2, color_white
+0x00400c14  0x3f062603  lw x12,0x000003f0(x12)            
+0x00400c18  0x00500693  addi x13,x0,5                1195 	li a3, 5
+0x00400c1c  0x00568693  addi x13,x13,5               1196 	addi a3, a3, 5
+0x00400c20  0xecdff0ef  jal x1,0xfffffecc            1197 	jal draw_vertical_line
+0x00400c24  0x01500513  addi x10,x0,21               1199 	li a0, 21
+0x00400c28  0x00450513  addi x10,x10,4               1200 	addi a0, a0, 4
+0x00400c2c  0x00500593  addi x11,x0,5                1201 	li a1, 5
+0x00400c30  0x00158593  addi x11,x11,1               1202 	addi a1, a1, 1
+0x00400c34  0x0fc0f617  auipc x12,0x0000fc0f         1203 	lw a2, color_white
+0x00400c38  0x3cc62603  lw x12,0x000003cc(x12)            
+0x00400c3c  0x00258693  addi x13,x11,2               1204 	addi a3, a1, 2
+0x00400c40  0xeadff0ef  jal x1,0xfffffeac            1205 	jal draw_vertical_line
+0x00400c44  0x01500513  addi x10,x0,21               1207 	li a0, 21
+0x00400c48  0x00150513  addi x10,x10,1               1208 	addi a0, a0, 1
+0x00400c4c  0x00500593  addi x11,x0,5                1209 	li a1, 5
+0x00400c50  0x00358593  addi x11,x11,3               1210 	addi a1, a1, 3
+0x00400c54  0x0fc0f617  auipc x12,0x0000fc0f         1211 	lw a2, color_white
+0x00400c58  0x3ac62603  lw x12,0x000003ac(x12)            
+0x00400c5c  0x00250693  addi x13,x10,2               1212 	addi a3, a0, 2
+0x00400c60  0xe45ff0ef  jal x1,0xfffffe44            1213 	jal draw_horizontal_line
+0x00400c64  0x01500513  addi x10,x0,21               1215 	li a0, 21
+0x00400c68  0x00150513  addi x10,x10,1               1216 	addi a0, a0, 1
+0x00400c6c  0x00500593  addi x11,x0,5                1217 	li a1, 5
+0x00400c70  0x0fc0f617  auipc x12,0x0000fc0f         1218 	lw a2, color_white
+0x00400c74  0x39062603  lw x12,0x00000390(x12)            
+0x00400c78  0x00350693  addi x13,x10,3               1219 	addi a3, a0, 3
+0x00400c7c  0xe29ff0ef  jal x1,0xfffffe28            1220 	jal draw_horizontal_line
+0x00400c80  0x01500513  addi x10,x0,21               1223 	li a0, 21
+0x00400c84  0x00650513  addi x10,x10,6               1224 	addi a0, a0, 6
+0x00400c88  0x00500593  addi x11,x0,5                1225 	li a1, 5
+0x00400c8c  0x0fc0f617  auipc x12,0x0000fc0f         1226 	lw a2, color_white
+0x00400c90  0x37462603  lw x12,0x00000374(x12)            
+0x00400c94  0x00500693  addi x13,x0,5                1227 	li a3, 5
+0x00400c98  0x00568693  addi x13,x13,5               1228 	addi a3, a3, 5
+0x00400c9c  0xe51ff0ef  jal x1,0xfffffe50            1229 	jal draw_vertical_line
+0x00400ca0  0x01500513  addi x10,x0,21               1231 	li a0, 21
+0x00400ca4  0x00a50513  addi x10,x10,10              1232 	addi a0, a0, 10
+0x00400ca8  0x00500593  addi x11,x0,5                1233 	li a1, 5
+0x00400cac  0x0fc0f617  auipc x12,0x0000fc0f         1234 	lw a2, color_white
+0x00400cb0  0x35462603  lw x12,0x00000354(x12)            
+0x00400cb4  0x00500693  addi x13,x0,5                1235 	li a3, 5
+0x00400cb8  0x00568693  addi x13,x13,5               1236 	addi a3, a3, 5
+0x00400cbc  0xe31ff0ef  jal x1,0xfffffe30            1237 	jal draw_vertical_line
+0x00400cc0  0x01500513  addi x10,x0,21               1239 	li a0, 21
+0x00400cc4  0x00650513  addi x10,x10,6               1240 	addi a0, a0, 6
+0x00400cc8  0x00500593  addi x11,x0,5                1241 	li a1, 5
+0x00400ccc  0x0fc0f617  auipc x12,0x0000fc0f         1242 	lw a2, color_white
+0x00400cd0  0x33462603  lw x12,0x00000334(x12)            
+0x00400cd4  0x00350693  addi x13,x10,3               1243 	addi a3, a0, 3
+0x00400cd8  0xdcdff0ef  jal x1,0xfffffdcc            1244 	jal draw_horizontal_line
+0x00400cdc  0x01500513  addi x10,x0,21               1246 	li a0, 21
+0x00400ce0  0x00650513  addi x10,x10,6               1247 	addi a0, a0, 6
+0x00400ce4  0x00500593  addi x11,x0,5                1248 	li a1, 5
+0x00400ce8  0x00558593  addi x11,x11,5               1249 	addi a1,  a1, 5
+0x00400cec  0x0fc0f617  auipc x12,0x0000fc0f         1250 	lw a2, color_white
+0x00400cf0  0x31462603  lw x12,0x00000314(x12)            
+0x00400cf4  0x00350693  addi x13,x10,3               1251 	addi a3, a0, 3
+0x00400cf8  0xdadff0ef  jal x1,0xfffffdac            1252 	jal draw_horizontal_line
+0x00400cfc  0x01500513  addi x10,x0,21               1255 	li a0, 21
+0x00400d00  0x00c50513  addi x10,x10,12              1256 	addi a0, a0, 12
+0x00400d04  0x00500593  addi x11,x0,5                1257 	li a1, 5
+0x00400d08  0x0fc0f617  auipc x12,0x0000fc0f         1258 	lw a2, color_white
+0x00400d0c  0x2f862603  lw x12,0x000002f8(x12)            
+0x00400d10  0x00500693  addi x13,x0,5                1259 	li a3, 5
+0x00400d14  0x00568693  addi x13,x13,5               1260 	addi a3, a3, 5
+0x00400d18  0xdd5ff0ef  jal x1,0xfffffdd4            1261 	jal draw_vertical_line
+0x00400d1c  0x01500513  addi x10,x0,21               1263 	li a0, 21
+0x00400d20  0x00d50513  addi x10,x10,13              1264 	addi a0, a0, 13
+0x00400d24  0x00500593  addi x11,x0,5                1265 	li a1, 5
+0x00400d28  0x0fc0f617  auipc x12,0x0000fc0f         1266 	lw a2, color_white
+0x00400d2c  0x2d862603  lw x12,0x000002d8(x12)            
+0x00400d30  0x00158693  addi x13,x11,1               1267 	addi a3, a1, 1
+0x00400d34  0xdb9ff0ef  jal x1,0xfffffdb8            1268 	jal draw_vertical_line
+0x00400d38  0x01500513  addi x10,x0,21               1270 	li a0, 21
+0x00400d3c  0x00e50513  addi x10,x10,14              1271 	addi a0, a0, 14
+0x00400d40  0x00500593  addi x11,x0,5                1272 	li a1, 5
+0x00400d44  0x00258593  addi x11,x11,2               1273 	addi a1, a1, 2
+0x00400d48  0x0fc0f617  auipc x12,0x0000fc0f         1274 	lw a2, color_white
+0x00400d4c  0x2b862603  lw x12,0x000002b8(x12)            
+0x00400d50  0x00158693  addi x13,x11,1               1275 	addi a3, a1, 1
+0x00400d54  0xd99ff0ef  jal x1,0xfffffd98            1276 	jal draw_vertical_line
+0x00400d58  0x01500513  addi x10,x0,21               1278 	li a0, 21
+0x00400d5c  0x00f50513  addi x10,x10,15              1279 	addi a0, a0, 15
+0x00400d60  0x00500593  addi x11,x0,5                1280 	li a1, 5
+0x00400d64  0x00458593  addi x11,x11,4               1281 	addi a1, a1, 4
+0x00400d68  0x0fc0f617  auipc x12,0x0000fc0f         1282 	lw a2, color_white
+0x00400d6c  0x29862603  lw x12,0x00000298(x12)            
+0x00400d70  0x00158693  addi x13,x11,1               1283 	addi a3, a1, 1
+0x00400d74  0xd79ff0ef  jal x1,0xfffffd78            1284 	jal draw_vertical_line
+0x00400d78  0x01500513  addi x10,x0,21               1286 	li a0, 21
+0x00400d7c  0x01050513  addi x10,x10,16              1287 	addi a0, a0, 16
+0x00400d80  0x00500593  addi x11,x0,5                1288 	li a1, 5
+0x00400d84  0x0fc0f617  auipc x12,0x0000fc0f         1289 	lw a2, color_white
+0x00400d88  0x27c62603  lw x12,0x0000027c(x12)            
+0x00400d8c  0x00500693  addi x13,x0,5                1290 	li a3, 5
+0x00400d90  0x00568693  addi x13,x13,5               1291 	addi a3, a3, 5
+0x00400d94  0xd59ff0ef  jal x1,0xfffffd58            1292 	jal draw_vertical_line
+0x00400d98  0x01500513  addi x10,x0,21               1296 	li a0, 21
+0x00400d9c  0x01250513  addi x10,x10,18              1297 	addi a0, a0, 18
+0x00400da0  0x00500593  addi x11,x0,5                1298 	li a1, 5
+0x00400da4  0x0fc0f617  auipc x12,0x0000fc0f         1299 	lw a2, color_white
+0x00400da8  0x25c62603  lw x12,0x0000025c(x12)            
+0x00400dac  0x00500693  addi x13,x0,5                1300 	li a3, 5
+0x00400db0  0x00568693  addi x13,x13,5               1301 	addi a3, a3, 5
+0x00400db4  0xd39ff0ef  jal x1,0xfffffd38            1302 	jal draw_vertical_line
+0x00400db8  0x01500513  addi x10,x0,21               1304 	li a0, 21
+0x00400dbc  0x01350513  addi x10,x10,19              1305 	addi a0, a0, 19
+0x00400dc0  0x00500593  addi x11,x0,5                1306 	li a1, 5
+0x00400dc4  0x00558593  addi x11,x11,5               1307 	addi a1, a1, 5
+0x00400dc8  0x0fc0f617  auipc x12,0x0000fc0f         1308 	lw a2, color_white
+0x00400dcc  0x23862603  lw x12,0x00000238(x12)            
+0x00400dd0  0x00350693  addi x13,x10,3               1309 	addi a3, a0, 3
+0x00400dd4  0xcd1ff0ef  jal x1,0xfffffcd0            1310 	jal draw_horizontal_line
+0x00400dd8  0x01500513  addi x10,x0,21               1312 	li a0, 21
+0x00400ddc  0x01350513  addi x10,x10,19              1313 	addi a0, a0, 19
+0x00400de0  0x00500593  addi x11,x0,5                1314 	li a1, 5
+0x00400de4  0x0fc0f617  auipc x12,0x0000fc0f         1315 	lw a2, color_white
+0x00400de8  0x21c62603  lw x12,0x0000021c(x12)            
+0x00400dec  0x00350693  addi x13,x10,3               1316 	addi a3, a0, 3
+0x00400df0  0xcb5ff0ef  jal x1,0xfffffcb4            1317 	jal draw_horizontal_line
+0x00400df4  0x01500513  addi x10,x0,21               1319 	li a0, 21
+0x00400df8  0x01450513  addi x10,x10,20              1320 	addi a0, a0, 20
+0x00400dfc  0x00500593  addi x11,x0,5                1321 	li a1, 5
+0x00400e00  0x00358593  addi x11,x11,3               1322 	addi a1, a1, 3
+0x00400e04  0x0fc0f617  auipc x12,0x0000fc0f         1323 	lw a2, color_white
+0x00400e08  0x1fc62603  lw x12,0x000001fc(x12)            
+0x00400e0c  0x00250693  addi x13,x10,2               1324 	addi a3, a0, 2
+0x00400e10  0xc95ff0ef  jal x1,0xfffffc94            1325 	jal draw_horizontal_line
+0x00400e14  0x01500513  addi x10,x0,21               1327 	li a0, 21
+0x00400e18  0x01650513  addi x10,x10,22              1328 	addi a0, a0, 22
+0x00400e1c  0x00500593  addi x11,x0,5                1329 	li a1, 5
+0x00400e20  0x00458593  addi x11,x11,4               1330 	addi a1, a1, 4
+0x00400e24  0x0fc0f617  auipc x12,0x0000fc0f         1331 	lw a2, color_white
+0x00400e28  0x1dc62603  lw x12,0x000001dc(x12)            
+0x00400e2c  0xc59ff0ef  jal x1,0xfffffc58            1332 	jal draw_point
+0x00400e30  0x00c00513  addi x10,x0,12               1336 	li a0, 12
+0x00400e34  0x01000593  addi x11,x0,16               1337 	li a1, 16
+0x00400e38  0x0fc0f617  auipc x12,0x0000fc0f         1338 	lw a2, color_white
+0x00400e3c  0x1c862603  lw x12,0x000001c8(x12)            
+0x00400e40  0x00458693  addi x13,x11,4               1339 	addi a3, a1, 4
+0x00400e44  0xca9ff0ef  jal x1,0xfffffca8            1340 	jal draw_vertical_line
+0x00400e48  0x00c00513  addi x10,x0,12               1342 	li a0, 12
+0x00400e4c  0x00350513  addi x10,x10,3               1343 	addi a0, a0, 3
+0x00400e50  0x01000593  addi x11,x0,16               1344 	li a1, 16
+0x00400e54  0x00158593  addi x11,x11,1               1345 	addi a1, a1, 1
+0x00400e58  0x0fc0f617  auipc x12,0x0000fc0f         1346 	lw a2, color_white
+0x00400e5c  0x1a862603  lw x12,0x000001a8(x12)            
+0x00400e60  0x00158693  addi x13,x11,1               1347 	addi a3, a1, 1
+0x00400e64  0xc89ff0ef  jal x1,0xfffffc88            1348 	jal draw_vertical_line
+0x00400e68  0x00c00513  addi x10,x0,12               1350 	li a0, 12
+0x00400e6c  0x00150513  addi x10,x10,1               1351 	addi a0, a0, 1
+0x00400e70  0x01000593  addi x11,x0,16               1352 	li a1, 16
+0x00400e74  0x0fc0f617  auipc x12,0x0000fc0f         1353 	lw a2, color_white
+0x00400e78  0x18c62603  lw x12,0x0000018c(x12)            
+0x00400e7c  0x00250693  addi x13,x10,2               1354 	addi a3, a0, 2
+0x00400e80  0xc25ff0ef  jal x1,0xfffffc24            1355 	jal draw_horizontal_line
+0x00400e84  0x00c00513  addi x10,x0,12               1357 	li a0, 12
+0x00400e88  0x00150513  addi x10,x10,1               1358 	addi a0, a0, 1
+0x00400e8c  0x01000593  addi x11,x0,16               1359 	li a1, 16
+0x00400e90  0x00258593  addi x11,x11,2               1360 	addi a1, a1, 2
+0x00400e94  0x0fc0f617  auipc x12,0x0000fc0f         1361 	lw a2, color_white
+0x00400e98  0x16c62603  lw x12,0x0000016c(x12)            
+0x00400e9c  0x00250693  addi x13,x10,2               1362 	addi a3, a0, 2
+0x00400ea0  0xc05ff0ef  jal x1,0xfffffc04            1363 	jal draw_horizontal_line
+0x00400ea4  0x00c00513  addi x10,x0,12               1367 	li a0, 12
+0x00400ea8  0x00550513  addi x10,x10,5               1368 	addi a0, a0, 5
+0x00400eac  0x01000593  addi x11,x0,16               1369 	li a1, 16
+0x00400eb0  0x0fc0f617  auipc x12,0x0000fc0f         1370 	lw a2, color_white
+0x00400eb4  0x15062603  lw x12,0x00000150(x12)            
+0x00400eb8  0x00458693  addi x13,x11,4               1371 	addi a3, a1, 4
+0x00400ebc  0xc31ff0ef  jal x1,0xfffffc30            1372 	jal draw_vertical_line
+0x00400ec0  0x00c00513  addi x10,x0,12               1374 	li a0, 12
+0x00400ec4  0x00750513  addi x10,x10,7               1375 	addi a0, a0, 7
+0x00400ec8  0x01000593  addi x11,x0,16               1376 	li a1, 16
+0x00400ecc  0x0fc0f617  auipc x12,0x0000fc0f         1377 	lw a2, color_white
+0x00400ed0  0x13462603  lw x12,0x00000134(x12)            
+0x00400ed4  0x00458693  addi x13,x11,4               1378 	addi a3, a1, 4
+0x00400ed8  0xc15ff0ef  jal x1,0xfffffc14            1379 	jal draw_vertical_line
+0x00400edc  0x00c00513  addi x10,x0,12               1381 	li a0, 12
+0x00400ee0  0x00750513  addi x10,x10,7               1382 	addi a0, a0, 7
+0x00400ee4  0x01000593  addi x11,x0,16               1383 	li a1, 16
+0x00400ee8  0x00258593  addi x11,x11,2               1384 	addi a1, a1, 2
+0x00400eec  0x0fc0f617  auipc x12,0x0000fc0f         1385 	lw a2, color_black
+0x00400ef0  0x11862603  lw x12,0x00000118(x12)            
+0x00400ef4  0xb91ff0ef  jal x1,0xfffffb90            1386 	jal draw_point
+0x00400ef8  0x00c00513  addi x10,x0,12               1388 	li a0, 12
+0x00400efc  0x00650513  addi x10,x10,6               1389 	addi a0, a0, 6
+0x00400f00  0x01000593  addi x11,x0,16               1390 	li a1, 16
+0x00400f04  0x0fc0f617  auipc x12,0x0000fc0f         1391 	lw a2, color_white
+0x00400f08  0x0fc62603  lw x12,0x000000fc(x12)            
+0x00400f0c  0xb79ff0ef  jal x1,0xfffffb78            1392 	jal draw_point
+0x00400f10  0x00c00513  addi x10,x0,12               1394 	li a0, 12
+0x00400f14  0x00650513  addi x10,x10,6               1395 	addi a0, a0, 6
+0x00400f18  0x01000593  addi x11,x0,16               1396 	li a1, 16
+0x00400f1c  0x00258593  addi x11,x11,2               1397 	addi a1, a1, 2
+0x00400f20  0x0fc0f617  auipc x12,0x0000fc0f         1398 	lw a2, color_white
+0x00400f24  0x0e062603  lw x12,0x000000e0(x12)            
+0x00400f28  0xb5dff0ef  jal x1,0xfffffb5c            1399 	jal draw_point
+0x00400f2c  0x00c00513  addi x10,x0,12               1402 	li a0, 12
+0x00400f30  0x00950513  addi x10,x10,9               1403 	addi a0, a0, 9
+0x00400f34  0x01000593  addi x11,x0,16               1404 	li a1, 16
+0x00400f38  0x0fc0f617  auipc x12,0x0000fc0f         1405 	lw a2, color_white
+0x00400f3c  0x0c862603  lw x12,0x000000c8(x12)            
+0x00400f40  0x00458693  addi x13,x11,4               1406 	addi a3, a1, 4
+0x00400f44  0xba9ff0ef  jal x1,0xfffffba8            1407 	jal draw_vertical_line
+0x00400f48  0x00c00513  addi x10,x0,12               1409 	li a0, 12
+0x00400f4c  0x00a50513  addi x10,x10,10              1410 	addi a0, a0, 10
+0x00400f50  0x01000593  addi x11,x0,16               1411 	li a1, 16
+0x00400f54  0x0fc0f617  auipc x12,0x0000fc0f         1412 	lw a2, color_white
+0x00400f58  0x0ac62603  lw x12,0x000000ac(x12)            
+0x00400f5c  0xb29ff0ef  jal x1,0xfffffb28            1413 	jal draw_point
+0x00400f60  0x00c00513  addi x10,x0,12               1415 	li a0, 12
+0x00400f64  0x00a50513  addi x10,x10,10              1416 	addi a0, a0, 10
+0x00400f68  0x01000593  addi x11,x0,16               1417 	li a1, 16
+0x00400f6c  0x00258593  addi x11,x11,2               1418 	addi a1, a1, 2
+0x00400f70  0x0fc0f617  auipc x12,0x0000fc0f         1419 	lw a2, color_white
+0x00400f74  0x09062603  lw x12,0x00000090(x12)            
+0x00400f78  0xb0dff0ef  jal x1,0xfffffb0c            1420 	jal draw_point
+0x00400f7c  0x00c00513  addi x10,x0,12               1422 	li a0, 12
+0x00400f80  0x00a50513  addi x10,x10,10              1423 	addi a0, a0, 10
+0x00400f84  0x01000593  addi x11,x0,16               1424 	li a1, 16
+0x00400f88  0x00458593  addi x11,x11,4               1425 	addi a1, a1, 4
+0x00400f8c  0x0fc0f617  auipc x12,0x0000fc0f         1426 	lw a2, color_white
+0x00400f90  0x07462603  lw x12,0x00000074(x12)            
+0x00400f94  0xaf1ff0ef  jal x1,0xfffffaf0            1427 	jal draw_point
+0x00400f98  0x00c00513  addi x10,x0,12               1430 	li a0, 12
+0x00400f9c  0x00c50513  addi x10,x10,12              1431 	addi a0, a0, 12
+0x00400fa0  0x01000593  addi x11,x0,16               1432 	li a1, 16
+0x00400fa4  0x0fc0f617  auipc x12,0x0000fc0f         1433 	lw a2, color_white
+0x00400fa8  0x05c62603  lw x12,0x0000005c(x12)            
+0x00400fac  0x00458693  addi x13,x11,4               1434 	addi a3, a1, 4
+0x00400fb0  0xb3dff0ef  jal x1,0xfffffb3c            1435 	jal draw_vertical_line
+0x00400fb4  0x00c00513  addi x10,x0,12               1437 	li a0, 12
+0x00400fb8  0x00c50513  addi x10,x10,12              1438 	addi a0, a0, 12
+0x00400fbc  0x01000593  addi x11,x0,16               1439 	li a1, 16
+0x00400fc0  0x00358593  addi x11,x11,3               1440 	addi a1, a1, 3
+0x00400fc4  0x0fc0f617  auipc x12,0x0000fc0f         1441 	lw a2, color_black
+0x00400fc8  0x04062603  lw x12,0x00000040(x12)            
+0x00400fcc  0xab9ff0ef  jal x1,0xfffffab8            1442 	jal draw_point
+0x00400fd0  0x00c00513  addi x10,x0,12               1444 	li a0, 12
+0x00400fd4  0x00d50513  addi x10,x10,13              1445 	addi a0, a0, 13
+0x00400fd8  0x01000593  addi x11,x0,16               1446 	li a1, 16
+0x00400fdc  0x0fc0f617  auipc x12,0x0000fc0f         1447 	lw a2, color_white
+0x00400fe0  0x02462603  lw x12,0x00000024(x12)            
+0x00400fe4  0xaa1ff0ef  jal x1,0xfffffaa0            1448 	jal draw_point
+0x00400fe8  0x00c00513  addi x10,x0,12               1450 	li a0, 12
+0x00400fec  0x00d50513  addi x10,x10,13              1451 	addi a0, a0, 13
+0x00400ff0  0x01000593  addi x11,x0,16               1452 	li a1, 16
+0x00400ff4  0x00258593  addi x11,x11,2               1453 	addi a1,  a1, 2
+0x00400ff8  0x0fc0f617  auipc x12,0x0000fc0f         1454 	lw a2, color_white
+0x00400ffc  0x00862603  lw x12,8(x12)                     
+0x00401000  0xa85ff0ef  jal x1,0xfffffa84            1455 	jal draw_point
+0x00401004  0x00c00513  addi x10,x0,12               1457 	li a0, 12
+0x00401008  0x00d50513  addi x10,x10,13              1458 	addi a0, a0, 13
+0x0040100c  0x01000593  addi x11,x0,16               1459 	li a1, 16
+0x00401010  0x00458593  addi x11,x11,4               1460 	addi a1,  a1, 4
+0x00401014  0x0fc0f617  auipc x12,0x0000fc0f         1461 	lw a2, color_white
+0x00401018  0xfec62603  lw x12,0xffffffec(x12)            
+0x0040101c  0xa69ff0ef  jal x1,0xfffffa68            1462 	jal draw_point
+0x00401020  0x00c00513  addi x10,x0,12               1464 	li a0, 12
+0x00401024  0x00e50513  addi x10,x10,14              1465 	addi a0, a0, 14
+0x00401028  0x01000593  addi x11,x0,16               1466 	li a1, 16
+0x0040102c  0x0fc0f617  auipc x12,0x0000fc0f         1467 	lw a2, color_white
+0x00401030  0xfd462603  lw x12,0xffffffd4(x12)            
+0x00401034  0x00458693  addi x13,x11,4               1468 	addi a3, a1, 4
+0x00401038  0xab5ff0ef  jal x1,0xfffffab4            1469 	jal draw_vertical_line
+0x0040103c  0x00c00513  addi x10,x0,12               1471 	li a0, 12
+0x00401040  0x00e50513  addi x10,x10,14              1472 	addi a0, a0, 14
+0x00401044  0x01000593  addi x11,x0,16               1473 	li a1, 16
+0x00401048  0x00158593  addi x11,x11,1               1474 	addi a1,  a1, 1
+0x0040104c  0x0fc0f617  auipc x12,0x0000fc0f         1475 	lw a2, color_black
+0x00401050  0xfb862603  lw x12,0xffffffb8(x12)            
+0x00401054  0xa31ff0ef  jal x1,0xfffffa30            1476 	jal draw_point
+0x00401058  0x00c00513  addi x10,x0,12               1480 	li a0, 12
+0x0040105c  0x01050513  addi x10,x10,16              1481 	addi a0, a0, 16
+0x00401060  0x01000593  addi x11,x0,16               1482 	li a1, 16
+0x00401064  0x0fc0f617  auipc x12,0x0000fc0f         1483 	lw a2, color_white
+0x00401068  0xf9c62603  lw x12,0xffffff9c(x12)            
+0x0040106c  0x00458693  addi x13,x11,4               1484 	addi a3, a1, 4
+0x00401070  0xa7dff0ef  jal x1,0xfffffa7c            1485 	jal draw_vertical_line
+0x00401074  0x00c00513  addi x10,x0,12               1487 	li a0, 12
+0x00401078  0x01050513  addi x10,x10,16              1488 	addi a0, a0, 16
+0x0040107c  0x01000593  addi x11,x0,16               1489 	li a1, 16
+0x00401080  0x00358593  addi x11,x11,3               1490 	addi a1, a1, 3
+0x00401084  0x0fc0f617  auipc x12,0x0000fc0f         1491 	lw a2, color_black
+0x00401088  0xf8062603  lw x12,0xffffff80(x12)            
+0x0040108c  0x9f9ff0ef  jal x1,0xfffff9f8            1492 	jal draw_point
+0x00401090  0x00c00513  addi x10,x0,12               1494 	li a0, 12
+0x00401094  0x01150513  addi x10,x10,17              1495 	addi a0, a0, 17
+0x00401098  0x01000593  addi x11,x0,16               1496 	li a1, 16
+0x0040109c  0x0fc0f617  auipc x12,0x0000fc0f         1497 	lw a2, color_white
+0x004010a0  0xf6462603  lw x12,0xffffff64(x12)            
+0x004010a4  0x9e1ff0ef  jal x1,0xfffff9e0            1498 	jal draw_point
+0x004010a8  0x00c00513  addi x10,x0,12               1500 	li a0, 12
+0x004010ac  0x01150513  addi x10,x10,17              1501 	addi a0, a0, 17
+0x004010b0  0x01000593  addi x11,x0,16               1502 	li a1, 16
+0x004010b4  0x00258593  addi x11,x11,2               1503 	addi a1,  a1, 2
+0x004010b8  0x0fc0f617  auipc x12,0x0000fc0f         1504 	lw a2, color_white
+0x004010bc  0xf4862603  lw x12,0xffffff48(x12)            
+0x004010c0  0x9c5ff0ef  jal x1,0xfffff9c4            1505 	jal draw_point
+0x004010c4  0x00c00513  addi x10,x0,12               1507 	li a0, 12
+0x004010c8  0x01150513  addi x10,x10,17              1508 	addi a0, a0, 17
+0x004010cc  0x01000593  addi x11,x0,16               1509 	li a1, 16
+0x004010d0  0x00458593  addi x11,x11,4               1510 	addi a1,  a1, 4
+0x004010d4  0x0fc0f617  auipc x12,0x0000fc0f         1511 	lw a2, color_white
+0x004010d8  0xf2c62603  lw x12,0xffffff2c(x12)            
+0x004010dc  0x9a9ff0ef  jal x1,0xfffff9a8            1512 	jal draw_point
+0x004010e0  0x00c00513  addi x10,x0,12               1514 	li a0, 12
+0x004010e4  0x01250513  addi x10,x10,18              1515 	addi a0, a0, 18
+0x004010e8  0x01000593  addi x11,x0,16               1516 	li a1, 16
+0x004010ec  0x0fc0f617  auipc x12,0x0000fc0f         1517 	lw a2, color_white
+0x004010f0  0xf1462603  lw x12,0xffffff14(x12)            
+0x004010f4  0x00458693  addi x13,x11,4               1518 	addi a3, a1, 4
+0x004010f8  0x9f5ff0ef  jal x1,0xfffff9f4            1519 	jal draw_vertical_line
+0x004010fc  0x00c00513  addi x10,x0,12               1521 	li a0, 12
+0x00401100  0x01250513  addi x10,x10,18              1522 	addi a0, a0, 18
+0x00401104  0x01000593  addi x11,x0,16               1523 	li a1, 16
+0x00401108  0x00158593  addi x11,x11,1               1524 	addi a1,  a1, 1
+0x0040110c  0x0fc0f617  auipc x12,0x0000fc0f         1525 	lw a2, color_black
+0x00401110  0xef862603  lw x12,0xfffffef8(x12)            
+0x00401114  0x971ff0ef  jal x1,0xfffff970            1526 	jal draw_point
+0x00401118  0x00c00513  addi x10,x0,12               1530 	li a0, 12
+0x0040111c  0x01750513  addi x10,x10,23              1531 	addi a0, a0, 23
+0x00401120  0x01000593  addi x11,x0,16               1532 	li a1, 16
+0x00401124  0x0fc0f617  auipc x12,0x0000fc0f         1533 	lw a2, color_white
+0x00401128  0xedc62603  lw x12,0xfffffedc(x12)            
+0x0040112c  0x00458693  addi x13,x11,4               1534 	addi a3, a1, 4
+0x00401130  0x9bdff0ef  jal x1,0xfffff9bc            1535 	jal draw_vertical_line
+0x00401134  0x00c00513  addi x10,x0,12               1537 	li a0, 12
+0x00401138  0x01650513  addi x10,x10,22              1538 	addi a0, a0, 22
+0x0040113c  0x01000593  addi x11,x0,16               1539 	li a1, 16
+0x00401140  0x00158593  addi x11,x11,1               1540 	addi a1,  a1, 1
+0x00401144  0x0fc0f617  auipc x12,0x0000fc0f         1541 	lw a2, color_white
+0x00401148  0xebc62603  lw x12,0xfffffebc(x12)            
+0x0040114c  0x939ff0ef  jal x1,0xfffff938            1542 	jal draw_point
+0x00401150  0x00c00513  addi x10,x0,12               1544 	li a0, 12
+0x00401154  0x01650513  addi x10,x10,22              1545 	addi a0, a0, 22
+0x00401158  0x01000593  addi x11,x0,16               1546 	li a1, 16
+0x0040115c  0x00458593  addi x11,x11,4               1547 	addi a1, a1, 4
+0x00401160  0x0fc0f617  auipc x12,0x0000fc0f         1548 	lw a2, color_white
+0x00401164  0xea062603  lw x12,0xfffffea0(x12)            
+0x00401168  0x00250693  addi x13,x10,2               1549 	addi a3, a0, 2
+0x0040116c  0x939ff0ef  jal x1,0xfffff938            1550 	jal draw_horizontal_line
+0x00401170  0x00c00513  addi x10,x0,12               1554 	li a0, 12
+0x00401174  0x01b50513  addi x10,x10,27              1555 	addi a0, a0, 27
+0x00401178  0x01000593  addi x11,x0,16               1556 	li a1, 16
+0x0040117c  0x0fc0f617  auipc x12,0x0000fc0f         1557 	lw a2, color_white
+0x00401180  0xe8462603  lw x12,0xfffffe84(x12)            
+0x00401184  0x00458693  addi x13,x11,4               1558 	addi a3, a1, 4
+0x00401188  0x965ff0ef  jal x1,0xfffff964            1559 	jal draw_vertical_line
+0x0040118c  0x00c00513  addi x10,x0,12               1561 	li a0, 12
+0x00401190  0x01d50513  addi x10,x10,29              1562 	addi a0, a0, 29
+0x00401194  0x01000593  addi x11,x0,16               1563 	li a1, 16
+0x00401198  0x0fc0f617  auipc x12,0x0000fc0f         1564 	lw a2, color_white
+0x0040119c  0xe6862603  lw x12,0xfffffe68(x12)            
+0x004011a0  0x00458693  addi x13,x11,4               1565 	addi a3, a1, 4
+0x004011a4  0x949ff0ef  jal x1,0xfffff948            1566 	jal draw_vertical_line		
+0x004011a8  0x00c00513  addi x10,x0,12               1568 	li a0, 12
+0x004011ac  0x01c50513  addi x10,x10,28              1569 	addi a0, a0, 28
+0x004011b0  0x01000593  addi x11,x0,16               1570 	li a1, 16
+0x004011b4  0x0fc0f617  auipc x12,0x0000fc0f         1571 	lw a2, color_white
+0x004011b8  0xe4c62603  lw x12,0xfffffe4c(x12)            
+0x004011bc  0x8c9ff0ef  jal x1,0xfffff8c8            1572 	jal draw_point
+0x004011c0  0x00c00513  addi x10,x0,12               1574 	li a0, 12
+0x004011c4  0x01c50513  addi x10,x10,28              1575 	addi a0, a0, 28
+0x004011c8  0x01000593  addi x11,x0,16               1576 	li a1, 16
+0x004011cc  0x00458593  addi x11,x11,4               1577 	addi a1, a1, 4
+0x004011d0  0x0fc0f617  auipc x12,0x0000fc0f         1578 	lw a2, color_white
+0x004011d4  0xe3062603  lw x12,0xfffffe30(x12)            
+0x004011d8  0x8adff0ef  jal x1,0xfffff8ac            1579 	jal draw_point
+0x004011dc  0x00c00513  addi x10,x0,12               1583 	li a0, 12
+0x004011e0  0x01f50513  addi x10,x10,31              1584 	addi a0, a0, 31
+0x004011e4  0x01000593  addi x11,x0,16               1585 	li a1, 16
+0x004011e8  0x0fc0f617  auipc x12,0x0000fc0f         1586 	lw a2, color_white
+0x004011ec  0xe1862603  lw x12,0xfffffe18(x12)            
+0x004011f0  0x00458693  addi x13,x11,4               1587 	addi a3, a1, 4
+0x004011f4  0x8f9ff0ef  jal x1,0xfffff8f8            1588 	jal draw_vertical_line
+0x004011f8  0x00c00513  addi x10,x0,12               1590 	li a0, 12
+0x004011fc  0x02150513  addi x10,x10,0x00000021      1591 	addi a0, a0, 33
+0x00401200  0x01000593  addi x11,x0,16               1592 	li a1, 16
+0x00401204  0x0fc0f617  auipc x12,0x0000fc0f         1593 	lw a2, color_white
+0x00401208  0xdfc62603  lw x12,0xfffffdfc(x12)            
+0x0040120c  0x00458693  addi x13,x11,4               1594 	addi a3, a1, 4
+0x00401210  0x8ddff0ef  jal x1,0xfffff8dc            1595 	jal draw_vertical_line
+0x00401214  0x00c00513  addi x10,x0,12               1597 	li a0, 12
+0x00401218  0x02150513  addi x10,x10,0x00000021      1598 	addi a0, a0, 33
+0x0040121c  0x01000593  addi x11,x0,16               1599 	li a1, 16
+0x00401220  0x00258593  addi x11,x11,2               1600 	addi a1, a1, 2
+0x00401224  0x0fc0f617  auipc x12,0x0000fc0f         1601 	lw a2, color_black
+0x00401228  0xde062603  lw x12,0xfffffde0(x12)            
+0x0040122c  0x859ff0ef  jal x1,0xfffff858            1602 	jal draw_point
+0x00401230  0x00c00513  addi x10,x0,12               1604 	li a0, 12
+0x00401234  0x02050513  addi x10,x10,0x00000020      1605 	addi a0, a0, 32
+0x00401238  0x01000593  addi x11,x0,16               1606 	li a1, 16
+0x0040123c  0x0fc0f617  auipc x12,0x0000fc0f         1607 	lw a2, color_white
+0x00401240  0xdc462603  lw x12,0xfffffdc4(x12)            
+0x00401244  0x841ff0ef  jal x1,0xfffff840            1608 	jal draw_point
+0x00401248  0x00c00513  addi x10,x0,12               1610 	li a0, 12
+0x0040124c  0x02050513  addi x10,x10,0x00000020      1611 	addi a0, a0, 32
+0x00401250  0x01000593  addi x11,x0,16               1612 	li a1, 16
+0x00401254  0x00258593  addi x11,x11,2               1613 	addi a1, a1, 2
+0x00401258  0x0fc0f617  auipc x12,0x0000fc0f         1614 	lw a2, color_white
+0x0040125c  0xda862603  lw x12,0xfffffda8(x12)            
+0x00401260  0x825ff0ef  jal x1,0xfffff824            1615 	jal draw_point
+0x00401264  0x00c00513  addi x10,x0,12               1619 	li a0, 12
+0x00401268  0x02450513  addi x10,x10,0x00000024      1620 	addi a0, a0, 36
+0x0040126c  0x01000593  addi x11,x0,16               1621 	li a1, 16
+0x00401270  0x00158593  addi x11,x11,1               1622 	addi a1, a1, 1
+0x00401274  0x0fc0f617  auipc x12,0x0000fc0f         1623 	lw a2, color_white
+0x00401278  0xd8c62603  lw x12,0xfffffd8c(x12)            
+0x0040127c  0x809ff0ef  jal x1,0xfffff808            1624 	jal draw_point
+0x00401280  0x00c00513  addi x10,x0,12               1626 	li a0, 12
+0x00401284  0x02550513  addi x10,x10,0x00000025      1627 	addi a0, a0, 37
+0x00401288  0x01000593  addi x11,x0,16               1628 	li a1, 16
+0x0040128c  0x0fc0f617  auipc x12,0x0000fc0f         1629 	lw a2, color_white
+0x00401290  0xd7462603  lw x12,0xfffffd74(x12)            
+0x00401294  0x00150693  addi x13,x10,1               1630 	addi a3, a0, 1
+0x00401298  0x80dff0ef  jal x1,0xfffff80c            1631 	jal draw_horizontal_line	
+0x0040129c  0x00c00513  addi x10,x0,12               1633 	li a0, 12
+0x004012a0  0x02750513  addi x10,x10,0x00000027      1634 	addi a0, a0, 39
+0x004012a4  0x01000593  addi x11,x0,16               1635 	li a1, 16
+0x004012a8  0x00158593  addi x11,x11,1               1636 	addi a1, a1, 1
+0x004012ac  0x0fc0f617  auipc x12,0x0000fc0f         1637 	lw a2, color_white
+0x004012b0  0xd5462603  lw x12,0xfffffd54(x12)            
+0x004012b4  0xfd0ff0ef  jal x1,0xfffff7d0            1638 	jal draw_point
+0x004012b8  0x00c00513  addi x10,x0,12               1640 	li a0, 12
+0x004012bc  0x02650513  addi x10,x10,0x00000026      1641 	addi a0, a0, 38
+0x004012c0  0x01000593  addi x11,x0,16               1642 	li a1, 16
+0x004012c4  0x00258593  addi x11,x11,2               1643 	addi a1, a1, 2
+0x004012c8  0x0fc0f617  auipc x12,0x0000fc0f         1644 	lw a2, color_white
+0x004012cc  0xd3862603  lw x12,0xfffffd38(x12)            
+0x004012d0  0xfb4ff0ef  jal x1,0xfffff7b4            1645 	jal draw_point
+0x004012d4  0x00c00513  addi x10,x0,12               1647 	li a0, 12
+0x004012d8  0x02550513  addi x10,x10,0x00000025      1648 	addi a0, a0, 37
+0x004012dc  0x01000593  addi x11,x0,16               1649 	li a1, 16
+0x004012e0  0x00358593  addi x11,x11,3               1650 	addi a1, a1, 3
+0x004012e4  0x0fc0f617  auipc x12,0x0000fc0f         1651 	lw a2, color_white
+0x004012e8  0xd1c62603  lw x12,0xfffffd1c(x12)            
+0x004012ec  0xf98ff0ef  jal x1,0xfffff798            1652 	jal draw_point
+0x004012f0  0x00c00513  addi x10,x0,12               1654 	li a0, 12
+0x004012f4  0x02450513  addi x10,x10,0x00000024      1655 	addi a0, a0, 36
+0x004012f8  0x01000593  addi x11,x0,16               1656 	li a1, 16
+0x004012fc  0x00458593  addi x11,x11,4               1657 	addi a1, a1, 4
+0x00401300  0x0fc0f617  auipc x12,0x0000fc0f         1658 	lw a2, color_white
+0x00401304  0xd0062603  lw x12,0xfffffd00(x12)            
+0x00401308  0x00350693  addi x13,x10,3               1659 	addi a3, a0, 3
+0x0040130c  0xf98ff0ef  jal x1,0xfffff798            1660 	jal draw_horizontal_line
+0x00401310  0x00400513  addi x10,x0,4                1665 	li a0, 4
+0x00401314  0x01800593  addi x11,x0,24               1666 	li a1, 24
+0x00401318  0x0fc0f617  auipc x12,0x0000fc0f         1667 	lw a2, color_white
+0x0040131c  0xce862603  lw x12,0xfffffce8(x12)            
+0x00401320  0x00458693  addi x13,x11,4               1668 	addi a3, a1, 4
+0x00401324  0xfc8ff0ef  jal x1,0xfffff7c8            1669 	jal draw_vertical_line
+0x00401328  0x00400513  addi x10,x0,4                1671 	li a0, 4
+0x0040132c  0x00150513  addi x10,x10,1               1672 	addi a0, a0, 1
+0x00401330  0x01800593  addi x11,x0,24               1673 	li a1, 24
+0x00401334  0x0fc0f617  auipc x12,0x0000fc0f         1674 	lw a2, color_white
+0x00401338  0xccc62603  lw x12,0xfffffccc(x12)            
+0x0040133c  0xf48ff0ef  jal x1,0xfffff748            1675 	jal draw_point
+0x00401340  0x00400513  addi x10,x0,4                1677 	li a0, 4
+0x00401344  0x00150513  addi x10,x10,1               1678 	addi a0, a0, 1
+0x00401348  0x01800593  addi x11,x0,24               1679 	li a1, 24
+0x0040134c  0x00258593  addi x11,x11,2               1680 	addi a1, a1, 2
+0x00401350  0x0fc0f617  auipc x12,0x0000fc0f         1681 	lw a2, color_white
+0x00401354  0xcb062603  lw x12,0xfffffcb0(x12)            
+0x00401358  0xf2cff0ef  jal x1,0xfffff72c            1682 	jal draw_point
+0x0040135c  0x00400513  addi x10,x0,4                1684 	li a0, 4
+0x00401360  0x00150513  addi x10,x10,1               1685 	addi a0, a0, 1
+0x00401364  0x01800593  addi x11,x0,24               1686 	li a1, 24
+0x00401368  0x00458593  addi x11,x11,4               1687 	addi a1, a1, 4
+0x0040136c  0x0fc0f617  auipc x12,0x0000fc0f         1688 	lw a2, color_white
+0x00401370  0xc9462603  lw x12,0xfffffc94(x12)            
+0x00401374  0xf10ff0ef  jal x1,0xfffff710            1689 	jal draw_point																																																																																																																																																																																							
+0x00401378  0x00400513  addi x10,x0,4                1693 	li a0, 4
+0x0040137c  0x00550513  addi x10,x10,5               1694 	addi a0, a0, 5
+0x00401380  0x01800593  addi x11,x0,24               1695 	li a1, 24
+0x00401384  0x0fc0f617  auipc x12,0x0000fc0f         1696 	lw a2, color_white
+0x00401388  0xc7c62603  lw x12,0xfffffc7c(x12)            
+0x0040138c  0x00458693  addi x13,x11,4               1697 	addi a3, a1, 4
+0x00401390  0xf5cff0ef  jal x1,0xfffff75c            1698 	jal draw_vertical_line
+0x00401394  0x00400513  addi x10,x0,4                1700 	li a0, 4
+0x00401398  0x00350513  addi x10,x10,3               1701 	addi a0, a0, 3
+0x0040139c  0x01800593  addi x11,x0,24               1702 	li a1, 24
+0x004013a0  0x0fc0f617  auipc x12,0x0000fc0f         1703 	lw a2, color_white
+0x004013a4  0xc6062603  lw x12,0xfffffc60(x12)            
+0x004013a8  0x00458693  addi x13,x11,4               1704 	addi a3, a1, 4
+0x004013ac  0xf40ff0ef  jal x1,0xfffff740            1705 	jal draw_vertical_line
+0x004013b0  0x00400513  addi x10,x0,4                1707 	li a0, 4
+0x004013b4  0x00550513  addi x10,x10,5               1708 	addi a0, a0, 5
+0x004013b8  0x01800593  addi x11,x0,24               1709 	li a1, 24
+0x004013bc  0x00258593  addi x11,x11,2               1710 	addi a1, a1, 2
+0x004013c0  0x0fc0f617  auipc x12,0x0000fc0f         1711 	lw a2, color_black
+0x004013c4  0xc4462603  lw x12,0xfffffc44(x12)            
+0x004013c8  0xebcff0ef  jal x1,0xfffff6bc            1712 	jal draw_point
+0x004013cc  0x00400513  addi x10,x0,4                1714 	li a0, 4
+0x004013d0  0x00450513  addi x10,x10,4               1715 	addi a0, a0, 4
+0x004013d4  0x01800593  addi x11,x0,24               1716 	li a1, 24
+0x004013d8  0x0fc0f617  auipc x12,0x0000fc0f         1717 	lw a2, color_white
+0x004013dc  0xc2862603  lw x12,0xfffffc28(x12)            
+0x004013e0  0xea4ff0ef  jal x1,0xfffff6a4            1718 	jal draw_point
+0x004013e4  0x00400513  addi x10,x0,4                1720 	li a0, 4
+0x004013e8  0x00450513  addi x10,x10,4               1721 	addi a0, a0, 4
+0x004013ec  0x01800593  addi x11,x0,24               1722 	li a1, 24
+0x004013f0  0x00258593  addi x11,x11,2               1723 	addi a1, a1, 2
+0x004013f4  0x0fc0f617  auipc x12,0x0000fc0f         1724 	lw a2, color_white
+0x004013f8  0xc0c62603  lw x12,0xfffffc0c(x12)            
+0x004013fc  0xe88ff0ef  jal x1,0xfffff688            1725 	jal draw_point					
+0x00401400  0x00400513  addi x10,x0,4                1729 	li a0, 4
+0x00401404  0x00750513  addi x10,x10,7               1730 	addi a0, a0, 7
+0x00401408  0x01800593  addi x11,x0,24               1731 	li a1, 24
+0x0040140c  0x0fc0f617  auipc x12,0x0000fc0f         1732 	lw a2, color_white
+0x00401410  0xbf462603  lw x12,0xfffffbf4(x12)            
+0x00401414  0x00458693  addi x13,x11,4               1733 	addi a3, a1, 4
+0x00401418  0xed4ff0ef  jal x1,0xfffff6d4            1734 	jal draw_vertical_line
+0x0040141c  0x00400513  addi x10,x0,4                1736 	li a0, 4
+0x00401420  0x00850513  addi x10,x10,8               1737 	addi a0, a0, 8
+0x00401424  0x01800593  addi x11,x0,24               1738 	li a1, 24
+0x00401428  0x00158593  addi x11,x11,1               1739 	addi a1, a1, 1
+0x0040142c  0x0fc0f617  auipc x12,0x0000fc0f         1740 	lw a2, color_white
+0x00401430  0xbd462603  lw x12,0xfffffbd4(x12)            
+0x00401434  0xe50ff0ef  jal x1,0xfffff650            1741 	jal draw_point
+0x00401438  0x00400513  addi x10,x0,4                1743 	li a0, 4
+0x0040143c  0x00950513  addi x10,x10,9               1744 	addi a0, a0, 9
+0x00401440  0x01800593  addi x11,x0,24               1745 	li a1, 24
+0x00401444  0x00258593  addi x11,x11,2               1746 	addi a1, a1, 2
+0x00401448  0x0fc0f617  auipc x12,0x0000fc0f         1747 	lw a2, color_white
+0x0040144c  0xbb862603  lw x12,0xfffffbb8(x12)            
+0x00401450  0xe34ff0ef  jal x1,0xfffff634            1748 	jal draw_point
+0x00401454  0x00400513  addi x10,x0,4                1750 	li a0, 4
+0x00401458  0x00a50513  addi x10,x10,10              1751 	addi a0, a0, 10
+0x0040145c  0x01800593  addi x11,x0,24               1752 	li a1, 24
+0x00401460  0x00358593  addi x11,x11,3               1753 	addi a1, a1, 3
+0x00401464  0x0fc0f617  auipc x12,0x0000fc0f         1754 	lw a2, color_white
+0x00401468  0xb9c62603  lw x12,0xfffffb9c(x12)            
+0x0040146c  0xe18ff0ef  jal x1,0xfffff618            1755 	jal draw_point
+0x00401470  0x00400513  addi x10,x0,4                1757 	li a0, 4
+0x00401474  0x00b50513  addi x10,x10,11              1758 	addi a0, a0, 11
+0x00401478  0x01800593  addi x11,x0,24               1759 	li a1, 24
+0x0040147c  0x0fc0f617  auipc x12,0x0000fc0f         1760 	lw a2, color_white
+0x00401480  0xb8462603  lw x12,0xfffffb84(x12)            
+0x00401484  0x00458693  addi x13,x11,4               1761 	addi a3, a1, 4
+0x00401488  0xe64ff0ef  jal x1,0xfffff664            1762 	jal draw_vertical_line
+0x0040148c  0x00400513  addi x10,x0,4                1765 	li a0, 4
+0x00401490  0x00d50513  addi x10,x10,13              1766 	addi a0, a0, 13
+0x00401494  0x01800593  addi x11,x0,24               1767 	li a1, 24
+0x00401498  0x0fc0f617  auipc x12,0x0000fc0f         1768 	lw a2, color_white
+0x0040149c  0xb6862603  lw x12,0xfffffb68(x12)            
+0x004014a0  0x00458693  addi x13,x11,4               1769 	addi a3, a1, 4
+0x004014a4  0xe48ff0ef  jal x1,0xfffff648            1770 	jal draw_vertical_line
+0x004014a8  0x00400513  addi x10,x0,4                1772 	li a0, 4
+0x004014ac  0x00e50513  addi x10,x10,14              1773 	addi a0, a0, 14
+0x004014b0  0x01800593  addi x11,x0,24               1774 	li a1, 24
+0x004014b4  0x0fc0f617  auipc x12,0x0000fc0f         1775 	lw a2, color_white
+0x004014b8  0xb4c62603  lw x12,0xfffffb4c(x12)            
+0x004014bc  0xdc8ff0ef  jal x1,0xfffff5c8            1776 	jal draw_point
+0x004014c0  0x00400513  addi x10,x0,4                1778 	li a0, 4
+0x004014c4  0x00e50513  addi x10,x10,14              1779 	addi a0, a0, 14
+0x004014c8  0x01800593  addi x11,x0,24               1780 	li a1, 24
+0x004014cc  0x00258593  addi x11,x11,2               1781 	addi a1, a1, 2
+0x004014d0  0x0fc0f617  auipc x12,0x0000fc0f         1782 	lw a2, color_white
+0x004014d4  0xb3062603  lw x12,0xfffffb30(x12)            
+0x004014d8  0xdacff0ef  jal x1,0xfffff5ac            1783 	jal draw_point
+0x004014dc  0x00400513  addi x10,x0,4                1785 	li a0, 4
+0x004014e0  0x00e50513  addi x10,x10,14              1786 	addi a0, a0, 14
+0x004014e4  0x01800593  addi x11,x0,24               1787 	li a1, 24
+0x004014e8  0x00458593  addi x11,x11,4               1788 	addi a1, a1, 4
+0x004014ec  0x0fc0f617  auipc x12,0x0000fc0f         1789 	lw a2, color_white
+0x004014f0  0xb1462603  lw x12,0xfffffb14(x12)            
+0x004014f4  0xd90ff0ef  jal x1,0xfffff590            1790 	jal draw_point		
+0x004014f8  0x00400513  addi x10,x0,4                1794 	li a0, 4
+0x004014fc  0x01050513  addi x10,x10,16              1795 	addi a0, a0, 16
+0x00401500  0x01800593  addi x11,x0,24               1796 	li a1, 24
+0x00401504  0x0fc0f617  auipc x12,0x0000fc0f         1797 	lw a2, color_white
+0x00401508  0xafc62603  lw x12,0xfffffafc(x12)            
+0x0040150c  0x00458693  addi x13,x11,4               1798 	addi a3, a1, 4
+0x00401510  0xddcff0ef  jal x1,0xfffff5dc            1799 	jal draw_vertical_line
+0x00401514  0x00400513  addi x10,x0,4                1801 	li a0, 4
+0x00401518  0x01050513  addi x10,x10,16              1802 	addi a0, a0, 16
+0x0040151c  0x01800593  addi x11,x0,24               1803 	li a1, 24
+0x00401520  0x00358593  addi x11,x11,3               1804 	addi a1, a1, 3
+0x00401524  0x0fc0f617  auipc x12,0x0000fc0f         1805 	lw a2, color_black
+0x00401528  0xae062603  lw x12,0xfffffae0(x12)            
+0x0040152c  0xd58ff0ef  jal x1,0xfffff558            1806 	jal draw_point
+0x00401530  0x00400513  addi x10,x0,4                1808 	li a0, 4
+0x00401534  0x01150513  addi x10,x10,17              1809 	addi a0, a0, 17
+0x00401538  0x01800593  addi x11,x0,24               1810 	li a1, 24
+0x0040153c  0x0fc0f617  auipc x12,0x0000fc0f         1811 	lw a2, color_white
+0x00401540  0xac462603  lw x12,0xfffffac4(x12)            
+0x00401544  0xd40ff0ef  jal x1,0xfffff540            1812 	jal draw_point
+0x00401548  0x00400513  addi x10,x0,4                1814 	li a0, 4
+0x0040154c  0x01150513  addi x10,x10,17              1815 	addi a0, a0, 17
+0x00401550  0x01800593  addi x11,x0,24               1816 	li a1, 24
+0x00401554  0x00258593  addi x11,x11,2               1817 	addi a1,  a1, 2
+0x00401558  0x0fc0f617  auipc x12,0x0000fc0f         1818 	lw a2, color_white
+0x0040155c  0xaa862603  lw x12,0xfffffaa8(x12)            
+0x00401560  0xd24ff0ef  jal x1,0xfffff524            1819 	jal draw_point
+0x00401564  0x00400513  addi x10,x0,4                1821 	li a0, 4
+0x00401568  0x01150513  addi x10,x10,17              1822 	addi a0, a0, 17
+0x0040156c  0x01800593  addi x11,x0,24               1823 	li a1, 24
+0x00401570  0x00458593  addi x11,x11,4               1824 	addi a1,  a1, 4
+0x00401574  0x0fc0f617  auipc x12,0x0000fc0f         1825 	lw a2, color_white
+0x00401578  0xa8c62603  lw x12,0xfffffa8c(x12)            
+0x0040157c  0xd08ff0ef  jal x1,0xfffff508            1826 	jal draw_point
+0x00401580  0x00400513  addi x10,x0,4                1828 	li a0, 4
+0x00401584  0x01250513  addi x10,x10,18              1829 	addi a0, a0, 18
+0x00401588  0x01800593  addi x11,x0,24               1830 	li a1, 24
+0x0040158c  0x0fc0f617  auipc x12,0x0000fc0f         1831 	lw a2, color_white
+0x00401590  0xa7462603  lw x12,0xfffffa74(x12)            
+0x00401594  0x00458693  addi x13,x11,4               1832 	addi a3, a1, 4
+0x00401598  0xd54ff0ef  jal x1,0xfffff554            1833 	jal draw_vertical_line
+0x0040159c  0x00400513  addi x10,x0,4                1835 	li a0, 4
+0x004015a0  0x01250513  addi x10,x10,18              1836 	addi a0, a0, 18
+0x004015a4  0x01800593  addi x11,x0,24               1837 	li a1, 24
+0x004015a8  0x00158593  addi x11,x11,1               1838 	addi a1,  a1, 1
+0x004015ac  0x0fc0f617  auipc x12,0x0000fc0f         1839 	lw a2, color_black
+0x004015b0  0xa5862603  lw x12,0xfffffa58(x12)            
+0x004015b4  0xcd0ff0ef  jal x1,0xfffff4d0            1840 	jal draw_point
+0x004015b8  0x00400513  addi x10,x0,4                1843 	li a0, 4
+0x004015bc  0x01450513  addi x10,x10,20              1844 	addi a0, a0, 20
+0x004015c0  0x01800593  addi x11,x0,24               1845 	li a1, 24
+0x004015c4  0x0fc0f617  auipc x12,0x0000fc0f         1846 	lw a2, color_white
+0x004015c8  0xa3c62603  lw x12,0xfffffa3c(x12)            
+0x004015cc  0x00250693  addi x13,x10,2               1847 	addi a3, a0, 2
+0x004015d0  0xcd4ff0ef  jal x1,0xfffff4d4            1848 	jal draw_horizontal_line
+0x004015d4  0x00400513  addi x10,x0,4                1850 	li a0, 4
+0x004015d8  0x01550513  addi x10,x10,21              1851 	addi a0, a0, 21
+0x004015dc  0x01800593  addi x11,x0,24               1852 	li a1, 24
+0x004015e0  0x0fc0f617  auipc x12,0x0000fc0f         1853 	lw a2, color_white
+0x004015e4  0xa2062603  lw x12,0xfffffa20(x12)            
+0x004015e8  0x00458693  addi x13,x11,4               1854 	addi a3, a1, 4
+0x004015ec  0xd00ff0ef  jal x1,0xfffff500            1855 	jal draw_vertical_line
+0x004015f0  0x00400513  addi x10,x0,4                1859 	li a0, 4
+0x004015f4  0x01850513  addi x10,x10,24              1860 	addi a0, a0, 24
+0x004015f8  0x01800593  addi x11,x0,24               1861 	li a1, 24
+0x004015fc  0x0fc0f617  auipc x12,0x0000fc0f         1862 	lw a2, color_white
+0x00401600  0xa0462603  lw x12,0xfffffa04(x12)            
+0x00401604  0x00458693  addi x13,x11,4               1863 	addi a3, a1, 4
+0x00401608  0xce4ff0ef  jal x1,0xfffff4e4            1864 	jal draw_vertical_line
+0x0040160c  0x00400513  addi x10,x0,4                1866 	li a0, 4
+0x00401610  0x01a50513  addi x10,x10,26              1867 	addi a0, a0, 26
+0x00401614  0x01800593  addi x11,x0,24               1868 	li a1, 24
+0x00401618  0x0fc0f617  auipc x12,0x0000fc0f         1869 	lw a2, color_white
+0x0040161c  0x9e862603  lw x12,0xfffff9e8(x12)            
+0x00401620  0x00458693  addi x13,x11,4               1870 	addi a3, a1, 4
+0x00401624  0xcc8ff0ef  jal x1,0xfffff4c8            1871 	jal draw_vertical_line		
+0x00401628  0x00400513  addi x10,x0,4                1873 	li a0, 4
+0x0040162c  0x01950513  addi x10,x10,25              1874 	addi a0, a0, 25
+0x00401630  0x01800593  addi x11,x0,24               1875 	li a1, 24
+0x00401634  0x0fc0f617  auipc x12,0x0000fc0f         1876 	lw a2, color_white
+0x00401638  0x9cc62603  lw x12,0xfffff9cc(x12)            
+0x0040163c  0xc48ff0ef  jal x1,0xfffff448            1877 	jal draw_point
+0x00401640  0x00400513  addi x10,x0,4                1879 	li a0, 4
+0x00401644  0x01950513  addi x10,x10,25              1880 	addi a0, a0, 25
+0x00401648  0x01800593  addi x11,x0,24               1881 	li a1, 24
+0x0040164c  0x00458593  addi x11,x11,4               1882 	addi a1, a1, 4
+0x00401650  0x0fc0f617  auipc x12,0x0000fc0f         1883 	lw a2, color_white
+0x00401654  0x9b062603  lw x12,0xfffff9b0(x12)            
+0x00401658  0xc2cff0ef  jal x1,0xfffff42c            1884 	jal draw_point
+0x0040165c  0x00400513  addi x10,x0,4                1888 	li a0, 4
+0x00401660  0x02050513  addi x10,x10,0x00000020      1889 	addi a0, a0, 32
+0x00401664  0x01800593  addi x11,x0,24               1890 	li a1, 24
+0x00401668  0x0fc0f617  auipc x12,0x0000fc0f         1891 	lw a2, color_white
+0x0040166c  0x99862603  lw x12,0xfffff998(x12)            
+0x00401670  0x00458693  addi x13,x11,4               1892 	addi a3, a1, 4
+0x00401674  0xc78ff0ef  jal x1,0xfffff478            1893 	jal draw_vertical_line
+0x00401678  0x00400513  addi x10,x0,4                1895 	li a0, 4
+0x0040167c  0x01e50513  addi x10,x10,30              1896 	addi a0, a0, 30
+0x00401680  0x01800593  addi x11,x0,24               1897 	li a1, 24
+0x00401684  0x0fc0f617  auipc x12,0x0000fc0f         1898 	lw a2, color_white
+0x00401688  0x97c62603  lw x12,0xfffff97c(x12)            
+0x0040168c  0x00458693  addi x13,x11,4               1899 	addi a3, a1, 4
+0x00401690  0xc5cff0ef  jal x1,0xfffff45c            1900 	jal draw_vertical_line
+0x00401694  0x00400513  addi x10,x0,4                1902 	li a0, 4
+0x00401698  0x02050513  addi x10,x10,0x00000020      1903 	addi a0, a0, 32
+0x0040169c  0x01800593  addi x11,x0,24               1904 	li a1, 24
+0x004016a0  0x00258593  addi x11,x11,2               1905 	addi a1, a1, 2
+0x004016a4  0x0fc0f617  auipc x12,0x0000fc0f         1906 	lw a2, color_black
+0x004016a8  0x96062603  lw x12,0xfffff960(x12)            
+0x004016ac  0xbd8ff0ef  jal x1,0xfffff3d8            1907 	jal draw_point
+0x004016b0  0x00400513  addi x10,x0,4                1909 	li a0, 4
+0x004016b4  0x01f50513  addi x10,x10,31              1910 	addi a0, a0, 31
+0x004016b8  0x01800593  addi x11,x0,24               1911 	li a1, 24
+0x004016bc  0x0fc0f617  auipc x12,0x0000fc0f         1912 	lw a2, color_white
+0x004016c0  0x94462603  lw x12,0xfffff944(x12)            
+0x004016c4  0xbc0ff0ef  jal x1,0xfffff3c0            1913 	jal draw_point
+0x004016c8  0x00400513  addi x10,x0,4                1915 	li a0, 4
+0x004016cc  0x01f50513  addi x10,x10,31              1916 	addi a0, a0, 31
+0x004016d0  0x01800593  addi x11,x0,24               1917 	li a1, 24
+0x004016d4  0x00258593  addi x11,x11,2               1918 	addi a1, a1, 2
+0x004016d8  0x0fc0f617  auipc x12,0x0000fc0f         1919 	lw a2, color_white
+0x004016dc  0x92862603  lw x12,0xfffff928(x12)            
+0x004016e0  0xba4ff0ef  jal x1,0xfffff3a4            1920 	jal draw_point
+0x004016e4  0x00400513  addi x10,x0,4                1923 	li a0, 4
+0x004016e8  0x02250513  addi x10,x10,0x00000022      1924 	addi a0, a0, 34
+0x004016ec  0x01800593  addi x11,x0,24               1925 	li a1, 24
+0x004016f0  0x0fc0f617  auipc x12,0x0000fc0f         1926 	lw a2, color_white
+0x004016f4  0x91062603  lw x12,0xfffff910(x12)            
+0x004016f8  0x00250693  addi x13,x10,2               1927 	addi a3, a0, 2
+0x004016fc  0xba8ff0ef  jal x1,0xfffff3a8            1928 	jal draw_horizontal_line
+0x00401700  0x00400513  addi x10,x0,4                1930 	li a0, 4
+0x00401704  0x02350513  addi x10,x10,0x00000023      1931 	addi a0, a0, 35
+0x00401708  0x01800593  addi x11,x0,24               1932 	li a1, 24
+0x0040170c  0x0fc0f617  auipc x12,0x0000fc0f         1933 	lw a2, color_white
+0x00401710  0x8f462603  lw x12,0xfffff8f4(x12)            
+0x00401714  0x00458693  addi x13,x11,4               1934 	addi a3, a1, 4
+0x00401718  0xbd4ff0ef  jal x1,0xfffff3d4            1935 	jal draw_vertical_line
+0x0040171c  0x00400513  addi x10,x0,4                1937 	li a0, 4
+0x00401720  0x02250513  addi x10,x10,0x00000022      1938 	addi a0, a0, 34
+0x00401724  0x01800593  addi x11,x0,24               1939 	li a1, 24
+0x00401728  0x00458593  addi x11,x11,4               1940 	addi a1, a1, 4
+0x0040172c  0x0fc0f617  auipc x12,0x0000fc0f         1941 	lw a2, color_white
+0x00401730  0x8d462603  lw x12,0xfffff8d4(x12)            
+0x00401734  0x00250693  addi x13,x10,2               1942 	addi a3, a0, 2
+0x00401738  0xb6cff0ef  jal x1,0xfffff36c            1943 	jal draw_horizontal_line
+0x0040173c  0x00400513  addi x10,x0,4                1946 	li a0, 4
+0x00401740  0x02650513  addi x10,x10,0x00000026      1947 	addi a0, a0, 38
+0x00401744  0x01800593  addi x11,x0,24               1948 	li a1, 24
+0x00401748  0x0fc0f617  auipc x12,0x0000fc0f         1949 	lw a2, color_white
+0x0040174c  0x8b862603  lw x12,0xfffff8b8(x12)            
+0x00401750  0x00158693  addi x13,x11,1               1950 	addi a3, a1, 1
+0x00401754  0xb98ff0ef  jal x1,0xfffff398            1951 	jal draw_vertical_line
+0x00401758  0x00400513  addi x10,x0,4                1953 	li a0, 4
+0x0040175c  0x02750513  addi x10,x10,0x00000027      1954 	addi a0, a0, 39
+0x00401760  0x01800593  addi x11,x0,24               1955 	li a1, 24
+0x00401764  0x00258593  addi x11,x11,2               1956 	addi, a1, a1, 2
+0x00401768  0x0fc0f617  auipc x12,0x0000fc0f         1957 	lw a2, color_white
+0x0040176c  0x89862603  lw x12,0xfffff898(x12)            
+0x00401770  0x00158693  addi x13,x11,1               1958 	addi a3, a1, 1
+0x00401774  0xb78ff0ef  jal x1,0xfffff378            1959 	jal draw_vertical_line
+0x00401778  0x00400513  addi x10,x0,4                1961 	li a0, 4
+0x0040177c  0x02850513  addi x10,x10,0x00000028      1962 	addi a0, a0, 40
+0x00401780  0x01800593  addi x11,x0,24               1963 	li a1, 24
+0x00401784  0x00458593  addi x11,x11,4               1964 	addi a1, a1, 4
+0x00401788  0x0fc0f617  auipc x12,0x0000fc0f         1965 	lw a2, color_white
+0x0040178c  0x87862603  lw x12,0xfffff878(x12)            
+0x00401790  0xaf4ff0ef  jal x1,0xfffff2f4            1966 	jal draw_point
+0x00401794  0x00400513  addi x10,x0,4                1968 	li a0, 4
+0x00401798  0x02950513  addi x10,x10,0x00000029      1969 	addi a0, a0, 41
+0x0040179c  0x01800593  addi x11,x0,24               1970 	li a1, 24
+0x004017a0  0x00258593  addi x11,x11,2               1971 	addi, a1, a1, 2
+0x004017a4  0x0fc0f617  auipc x12,0x0000fc0f         1972 	lw a2, color_white
+0x004017a8  0x85c62603  lw x12,0xfffff85c(x12)            
+0x004017ac  0x00158693  addi x13,x11,1               1973 	addi a3, a1, 1
+0x004017b0  0xb3cff0ef  jal x1,0xfffff33c            1974 	jal draw_vertical_line
+0x004017b4  0x00400513  addi x10,x0,4                1976 	li a0, 4
+0x004017b8  0x02a50513  addi x10,x10,0x0000002a      1977 	addi a0, a0, 42
+0x004017bc  0x01800593  addi x11,x0,24               1978 	li a1, 24
+0x004017c0  0x0fc0f617  auipc x12,0x0000fc0f         1979 	lw a2, color_white
+0x004017c4  0x84062603  lw x12,0xfffff840(x12)            
+0x004017c8  0x00158693  addi x13,x11,1               1980 	addi a3, a1, 1
+0x004017cc  0xb20ff0ef  jal x1,0xfffff320            1981 	jal draw_vertical_line
+0x004017d0  0x00400513  addi x10,x0,4                1984 	li a0, 4
+0x004017d4  0x02c50513  addi x10,x10,0x0000002c      1985 	addi a0, a0, 44
+0x004017d8  0x01800593  addi x11,x0,24               1986 	li a1, 24
+0x004017dc  0x0fc0f617  auipc x12,0x0000fc0f         1987 	lw a2, color_white
+0x004017e0  0x82462603  lw x12,0xfffff824(x12)            
+0x004017e4  0x00458693  addi x13,x11,4               1988 	addi a3, a1, 4
+0x004017e8  0xb04ff0ef  jal x1,0xfffff304            1989 	jal draw_vertical_line
+0x004017ec  0x00400513  addi x10,x0,4                1991 	li a0, 4
+0x004017f0  0x02d50513  addi x10,x10,0x0000002d      1992 	addi a0, a0, 45
+0x004017f4  0x01800593  addi x11,x0,24               1993 	li a1, 24
+0x004017f8  0x0fc0f617  auipc x12,0x0000fc0f         1994 	lw a2, color_white
+0x004017fc  0x80862603  lw x12,0xfffff808(x12)            
+0x00401800  0xa84ff0ef  jal x1,0xfffff284            1995 	jal draw_point
+0x00401804  0x00400513  addi x10,x0,4                1997 	li a0, 4
+0x00401808  0x02d50513  addi x10,x10,0x0000002d      1998 	addi a0, a0, 45
+0x0040180c  0x01800593  addi x11,x0,24               1999 	li a1, 24
+0x00401810  0x00258593  addi x11,x11,2               2000 	addi a1, a1, 2
+0x00401814  0x0fc0e617  auipc x12,0x0000fc0e         2001 	lw a2, color_white
+0x00401818  0x7ec62603  lw x12,0x000007ec(x12)            
+0x0040181c  0xa68ff0ef  jal x1,0xfffff268            2002 	jal draw_point
+0x00401820  0x00400513  addi x10,x0,4                2004 	li a0, 4
+0x00401824  0x02d50513  addi x10,x10,0x0000002d      2005 	addi a0, a0, 45
+0x00401828  0x01800593  addi x11,x0,24               2006 	li a1, 24
+0x0040182c  0x00458593  addi x11,x11,4               2007 	addi a1, a1, 4
+0x00401830  0x0fc0e617  auipc x12,0x0000fc0e         2008 	lw a2, color_white
+0x00401834  0x7d062603  lw x12,0x000007d0(x12)            
+0x00401838  0xa4cff0ef  jal x1,0xfffff24c            2009 	jal draw_point		
+0x0040183c  0x00400513  addi x10,x0,4                2013 	li a0, 4
+0x00401840  0x03150513  addi x10,x10,0x00000031      2014 	addi a0, a0, 49
+0x00401844  0x01800593  addi x11,x0,24               2015 	li a1, 24
+0x00401848  0x0fc0e617  auipc x12,0x0000fc0e         2016 	lw a2, color_white
+0x0040184c  0x7b862603  lw x12,0x000007b8(x12)            
+0x00401850  0x00458693  addi x13,x11,4               2017 	addi a3, a1, 4
+0x00401854  0xa98ff0ef  jal x1,0xfffff298            2018 	jal draw_vertical_line
+0x00401858  0x00400513  addi x10,x0,4                2020 	li a0, 4
+0x0040185c  0x02f50513  addi x10,x10,0x0000002f      2021 	addi a0, a0, 47
+0x00401860  0x01800593  addi x11,x0,24               2022 	li a1, 24
+0x00401864  0x0fc0e617  auipc x12,0x0000fc0e         2023 	lw a2, color_white
+0x00401868  0x79c62603  lw x12,0x0000079c(x12)            
+0x0040186c  0x00458693  addi x13,x11,4               2024 	addi a3, a1, 4
+0x00401870  0xa7cff0ef  jal x1,0xfffff27c            2025 	jal draw_vertical_line
+0x00401874  0x00400513  addi x10,x0,4                2027 	li a0, 4
+0x00401878  0x03150513  addi x10,x10,0x00000031      2028 	addi a0, a0, 49
+0x0040187c  0x01800593  addi x11,x0,24               2029 	li a1, 24
+0x00401880  0x00258593  addi x11,x11,2               2030 	addi a1, a1, 2
+0x00401884  0x0fc0e617  auipc x12,0x0000fc0e         2031 	lw a2, color_black
+0x00401888  0x78062603  lw x12,0x00000780(x12)            
+0x0040188c  0x9f8ff0ef  jal x1,0xfffff1f8            2032 	jal draw_point
+0x00401890  0x00400513  addi x10,x0,4                2034 	li a0, 4
+0x00401894  0x03050513  addi x10,x10,0x00000030      2035 	addi a0, a0, 48
+0x00401898  0x01800593  addi x11,x0,24               2036 	li a1, 24
+0x0040189c  0x0fc0e617  auipc x12,0x0000fc0e         2037 	lw a2, color_white
+0x004018a0  0x76462603  lw x12,0x00000764(x12)            
+0x004018a4  0x9e0ff0ef  jal x1,0xfffff1e0            2038 	jal draw_point
+0x004018a8  0x00400513  addi x10,x0,4                2040 	li a0, 4
+0x004018ac  0x03050513  addi x10,x10,0x00000030      2041 	addi a0, a0, 48
+0x004018b0  0x01800593  addi x11,x0,24               2042 	li a1, 24
+0x004018b4  0x00258593  addi x11,x11,2               2043 	addi a1, a1, 2
+0x004018b8  0x0fc0e617  auipc x12,0x0000fc0e         2044 	lw a2, color_white
+0x004018bc  0x74862603  lw x12,0x00000748(x12)            
+0x004018c0  0x9c4ff0ef  jal x1,0xfffff1c4            2045 	jal draw_point
+0x004018c4  0x00400513  addi x10,x0,4                2049 	li a0, 4
+0x004018c8  0x03350513  addi x10,x10,0x00000033      2050 	addi a0, a0, 51
+0x004018cc  0x01800593  addi x11,x0,24               2051 	li a1, 24
+0x004018d0  0x00358593  addi x11,x11,3               2052 	addi a1, a1, 3
+0x004018d4  0x0fc0e617  auipc x12,0x0000fc0e         2053 	lw a2, color_white
+0x004018d8  0x72c62603  lw x12,0x0000072c(x12)            
+0x004018dc  0x00158693  addi x13,x11,1               2054 	addi a3, a1, 1
+0x004018e0  0xa0cff0ef  jal x1,0xfffff20c            2055 	jal draw_vertical_line
+0x004018e4  0x00400513  addi x10,x0,4                2057 	li a0, 4
+0x004018e8  0x03450513  addi x10,x10,0x00000034      2058 	addi a0, a0, 52
+0x004018ec  0x01800593  addi x11,x0,24               2059 	li a1, 24
+0x004018f0  0x00158593  addi x11,x11,1               2060 	addi a1, a1, 1
+0x004018f4  0x0fc0e617  auipc x12,0x0000fc0e         2061 	lw a2, color_white
+0x004018f8  0x70c62603  lw x12,0x0000070c(x12)            
+0x004018fc  0x00158693  addi x13,x11,1               2062 	addi a3, a1, 1
+0x00401900  0x9ecff0ef  jal x1,0xfffff1ec            2063 	jal draw_vertical_line
+0x00401904  0x00400513  addi x10,x0,4                2065 	li a0, 4
+0x00401908  0x03650513  addi x10,x10,0x00000036      2066 	addi a0, a0, 54
+0x0040190c  0x01800593  addi x11,x0,24               2067 	li a1, 24
+0x00401910  0x00158593  addi x11,x11,1               2068 	addi a1, a1, 1
+0x00401914  0x0fc0e617  auipc x12,0x0000fc0e         2069 	lw a2, color_white
+0x00401918  0x6ec62603  lw x12,0x000006ec(x12)            
+0x0040191c  0x00158693  addi x13,x11,1               2070 	addi a3, a1, 1
+0x00401920  0x9ccff0ef  jal x1,0xfffff1cc            2071 	jal draw_vertical_line
+0x00401924  0x00400513  addi x10,x0,4                2073 	li a0, 4
+0x00401928  0x03750513  addi x10,x10,0x00000037      2074 	addi a0, a0, 55
+0x0040192c  0x01800593  addi x11,x0,24               2075 	li a1, 24
+0x00401930  0x00358593  addi x11,x11,3               2076 	addi a1, a1, 3
+0x00401934  0x0fc0e617  auipc x12,0x0000fc0e         2077 	lw a2, color_white
+0x00401938  0x6cc62603  lw x12,0x000006cc(x12)            
+0x0040193c  0x00158693  addi x13,x11,1               2078 	addi a3, a1, 1
+0x00401940  0x9acff0ef  jal x1,0xfffff1ac            2079 	jal draw_vertical_line
+0x00401944  0x00400513  addi x10,x0,4                2081 	li a0, 4
+0x00401948  0x03550513  addi x10,x10,0x00000035      2082 	addi a0, a0, 53
+0x0040194c  0x01800593  addi x11,x0,24               2083 	li a1, 24
+0x00401950  0x0fc0e617  auipc x12,0x0000fc0e         2084 	lw a2, color_white
+0x00401954  0x6b062603  lw x12,0x000006b0(x12)            
+0x00401958  0x92cff0ef  jal x1,0xfffff12c            2085 	jal draw_point
+0x0040195c  0x00400513  addi x10,x0,4                2087 	li a0, 4
+0x00401960  0x03450513  addi x10,x10,0x00000034      2088 	addi a0, a0, 52
+0x00401964  0x01800593  addi x11,x0,24               2089 	li a1, 24
+0x00401968  0x00358593  addi x11,x11,3               2090 	addi a1, a1, 3
+0x0040196c  0x0fc0e617  auipc x12,0x0000fc0e         2091 	lw a2, color_white
+0x00401970  0x69462603  lw x12,0x00000694(x12)            
+0x00401974  0x00250693  addi x13,x10,2               2092 	addi a3, a0, 2
+0x00401978  0x92cff0ef  jal x1,0xfffff12c            2093 	jal draw_horizontal_line
+0x0040197c  0x00012083  lw x1,0(x2)                  2096 	lw ra, 0(sp)
+0x00401980  0x00410113  addi x2,x2,4                 2097 	addi sp, sp, 4
+0x00401984  0x00008067  jalr x0,x1,0                 2099 	jr ra 
+0x00401988  0xffff02b7  lui x5,0xfffffff0            2108 	sw zero, 0xFFFF0004, t0
+0x0040198c  0x0002a223  sw x0,4(x5)                       
+0x00401990  0x00008067  jalr x0,x1,0                 2109 	jr ra
+0x00401994  0xffff02b7  lui x5,0xfffffff0            2117 	sw zero, 0xFFFF0000, t0
+0x00401998  0x0002a023  sw x0,0(x5)                       
+0x0040199c  0x00008067  jalr x0,x1,0                 2118 	jr ra
+0x004019a0  0x0000006f  jal x0,0x00000000            2123 j end
