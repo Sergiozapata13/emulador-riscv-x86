@@ -290,6 +290,15 @@ main_loop:
     mov eax, [rbx + pc*4]                     ; Cargar `pc` en eax
     mov r12d, eax                             ; Guardar el PC de ESTA instrucción
 
+    ; El PC debe estar alineado a 4. Sin este chequeo un salto con
+    ; destino impar se "arregla" solo al calcular el indice, y el error
+    ; queda escondido. Las pruebas de mutacion destaparon este hueco.
+    test eax, 3
+    jz .pc_alineado
+    mov r10d, eax
+    jmp mem_error
+.pc_alineado:
+
     ; Calcular el índice en `text_memory`
     sub eax, 0x400000                         ; Convertir `pc` a índice (base 0) en `text_memory`
     shr eax, 2                                ; Dividir por 4 para obtener índice de instrucción de 4 bytes

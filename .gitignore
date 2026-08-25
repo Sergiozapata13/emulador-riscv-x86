@@ -1,3 +1,4 @@
 *.o
 emulador
 traza.txt
+pruebas/punto_*.txt
