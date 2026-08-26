@@ -1,6 +1,47 @@
 #!/usr/bin/env python3
-"""Ensamblador minimo de RV32I: solo para validar los programas de prueba
-antes de pasarlos a RARS. No pretende reemplazar a RARS."""
+"""Ensamblador minimo de RV32I/M para iterar rapido sin abrir RARS.
+
+QUE ES
+    Una herramienta de conveniencia. Ensambla los programas de prueba de
+    tests/ y escribe punto_text_hex.txt y punto_data_hex.txt en el
+    directorio actual, con el mismo formato que vuelca RARS. Es lo que usa
+    `make test`: editar, ensamblar y correr queda en un solo comando, en vez
+    del ciclo de abrir RARS, ensamblar, hacer dos volcados por menu y mover
+    los archivos.
+
+QUE **NO** ES
+    Una fuente de verdad independiente. Se escribio junto con el emulador,
+    asi que los dos podrian compartir el mismo malentendido: si aqui se
+    codificara mal el inmediato de una rama y el emulador lo decodificara mal
+    de la misma forma, las pruebas pasarian igual. Solo RARS puede delatar
+    eso. La regla es: **rvasm para iterar, RARS para validar.**
+
+QUE SOPORTA
+    RV32I completo, la extension M, los contadores (rdtime, rdcycle,
+    rdinstret), las directivas .text .data .word .asciz .string, y las
+    pseudoinstrucciones li la mv j jr ret call nop beqz bnez neg not seqz
+    snez.
+
+QUE NO SOPORTA
+    Almacenamientos de tres operandos con etiqueta (`sw a3, etiqueta, t0`),
+    que es por lo que el Bomberman debe ensamblarse en RARS. Tampoco .align,
+    .space, .byte, .half, macros, ni la mayoria de las directivas.
+
+DIFERENCIAS CONOCIDAS CON RARS
+    - `mv rd, rs` se expande aqui como `addi rd, rs, 0` (la forma canonica de
+      la especificacion) y en RARS como `add rd, zero, rs`. Las dos son
+      correctas y hacen lo mismo.
+    - El .data se rellena aqui hasta multiplos de 4 bytes, porque la salida
+      son palabras completas. RARS coloca las cadenas una tras otra sin
+      relleno, asi que las etiquetas posteriores quedan en desplazamientos
+      distintos.
+    Consecuencia practica: los dos volcados de un par van juntos. Cruzar el
+    .text de RARS con el .data de rvasm hace que las cadenas se impriman
+    desde posiciones equivocadas.
+
+USO
+    python3 rvasm.py programa.asm
+"""
 import re, sys
 
 REGS = {f'x{i}': i for i in range(32)}
