@@ -1,26 +1,36 @@
 # RISC-V Emulator in x86-64 Assembly
 
-An emulator for the RISC-V architecture (RV32I) written entirely in x86-64
+An emulator for the RISC-V architecture (RV32I + M) written entirely in x86-64
 assembly with NASM, with no libraries: it issues Linux syscalls directly and
 starts at `_start` rather than `main`.
 
 It runs machine code produced by RARS from hexadecimal memory dumps, renders
 video to the text console, and captures keyboard input through memory-mapped
-I/O.
+I/O. Two full games — a Pong and a Bomberman, written independently of this
+emulator — run identically here and in RARS.
 
 ## Building and running
 
 ```bash
-make            # build
-make jugar      # run without trace
-make traza      # run and write traza.txt
-make limpiar    # remove generated files
+make              # build
+make pong         # run the Pong
+make pong-traza   # run the Pong and write traza.txt
+make test         # run both test suites
+make limpiar      # remove generated files
 ```
 
-The executable must be run **from the project directory**, because the input
-filenames are relative paths.
+To run any other program, pass the two dumps as arguments:
+
+```bash
+./emulador -q programs/bomberman/punto_text_hex.txt \
+              programs/bomberman/punto_data_hex.txt
+```
 
 ### Options
+
+```
+./emulador [-q] [-t file] [text_dump [data_dump]]
+```
 
 | Invocation | Trace | Video | Guest program output |
 |---|---|---|---|
@@ -32,14 +42,28 @@ There are three output streams but only two standard descriptors, which is why
 `-t` exists: it gives the trace its own descriptor and keeps all three separate.
 If the `open` fails, the trace falls back to stdout instead of aborting.
 
+Both dump paths default to `punto_text_hex.txt` and `punto_data_hex.txt` in the
+current directory when omitted.
+
+## Repository layout
+
+```
+src/        emulador.asm — the emulator itself
+tools/      rvasm.py — minimal RV32I/M assembler, for iterating without RARS
+tests/      self-checking test programs
+programs/   guest programs, each with its source and dumps
+```
+
 ## Input files
 
-- `punto_text_hex.txt` — the `.text` segment, one 8-digit hex instruction per line
-- `punto_data_hex.txt` — the `.data` segment, one word per line
+Two hexadecimal dumps, one word per line. Generate them from RARS via
+`File → Dump Memory`, format *Hexadecimal Text*, dumping each segment
+separately.
 
-Generate them from RARS via `File → Dump Memory`, format *Hexadecimal Text*,
-dumping each segment separately. Only lowercase digits and lines of exactly
-eight characters are accepted.
+The loader reads the whole file and then parses it, accepting upper or lower
+case, LF or CRLF line endings, arbitrary whitespace, and a missing final
+newline. If a dump exceeds the array that holds it, the emulator says so on
+stderr rather than silently discarding the remainder.
 
 ---
 
@@ -48,8 +72,8 @@ eight characters are accepted.
 The emulator is a straightforward interpreter: a fetch-decode-execute loop over
 an array of instruction words, with all guest state held in host memory. There
 is no JIT, no basic-block caching, and no instruction pre-decoding — each
-instruction is decoded from scratch every time it executes. For a target that
-spends most of its time asleep between animation frames, that simplicity costs
+instruction is decoded from scratch every time it executes. For targets that
+spend most of their time asleep between animation frames, that simplicity costs
 nothing and keeps the code readable.
 
 ### Guest state
@@ -62,9 +86,9 @@ refuses to write index 0.
 | Symbol | Size | Holds |
 |---|---|---|
 | `registers` | 33 words | `x0`–`x31` plus the PC at index 32 |
-| `text_memory` | 2000 words | the `.text` segment |
-| `data_memory` | 1024 words | the `.data` segment |
-| `framebuffer` | 2048 words | video memory |
+| `text_memory` | 16384 words | the `.text` segment |
+| `data_memory` | 8192 words | the `.data` segment |
+| `framebuffer` | 8192 words | video memory |
 | `stack_mem` | 4096 words | the guest stack |
 | `key_status`, `key_data` | 1 word each | the two MMIO registers |
 
@@ -76,7 +100,7 @@ register dump a simple loop.
 
 ```
 _start
-  ├── parse arguments (-q, -t)
+  ├── parse arguments (-q, -t, dump paths)
   ├── read_text_file  →  text_memory
   ├── read_data_file  →  data_memory
   ├── initialise sp, gp, pc
@@ -95,14 +119,18 @@ branches all compute their result relative to the address of the instruction
 *itself*, not the next one. They therefore read `r12d`, which holds the
 pre-increment PC, rather than `registers[32]`. Computing from the incremented
 value would shift every one of those results by four bytes — and because the
-guest uses `auipc` for nearly every data access, the damage would be widespread
+guests use `auipc` for nearly every data access, the damage would be widespread
 and hard to localise.
 
 The alternative design — leaving the PC alone and adding four only when the
 instruction did not modify it — was rejected because it cannot represent a jump
-to the current address. The guest's final instruction is `j 0`, an infinite
-self-loop that marks the end of the program; under that scheme it would fall
+to the current address. The Pong's final instruction is `j 0`, an infinite
+self-loop marking the end of the program; under that scheme it would fall
 through instead of halting.
+
+The PC is checked for 4-byte alignment on every fetch. Without that check a
+jump to an odd address would be silently rounded down by the index arithmetic,
+hiding the bug — a gap that mutation testing exposed.
 
 ### Register conventions on the host side
 
@@ -123,13 +151,21 @@ Two small calling conventions carry most of the traffic. `read_reg` takes a
 register index in `ecx` and returns its value in `eax`; `write_reg` takes the
 index in `ecx` and the value in `eax`, and silently drops writes to `x0`.
 Routing every register write through one place is what makes the `x0` guarantee
-a single line of code instead of a rule to remember at thirty call sites.
+a single line of code instead of a rule to remember at forty call sites.
 
 The second convention governs text output: **every emitter writes at `[rdi]` and
 leaves `rdi` pointing just past what it wrote**. `put_hex8`, `emit_dec8`,
-`e_reg`, `e_coma` and `e_dec` all obey it, so a formatted line is built by
-calling them in sequence and the final length is simply how far the pointer
+`e_reg`, `e_coma`, `e_dec` and `e_str` all obey it, so a formatted line is built
+by calling them in sequence and the final length is simply how far the pointer
 moved. No emitter needs to know or return a length.
+
+One hazard deserves naming, because it produced the nastiest bug in the
+project: **`syscall` destroys `rcx` and `r11`, and `div` writes its remainder
+into `rdx`** — which is where the current instruction lives. `decode_csr`
+originally extracted its destination register after calling the clock routine,
+so `rdtime` wrote into whichever register the leftover nanoseconds happened to
+name. It failed roughly one run in six. The destination is now extracted first
+and pushed to the stack.
 
 ### Memory subsystem
 
@@ -154,7 +190,8 @@ eight, which assumes the host is little-endian like RISC-V — true on x86.
 `decode_instruction` masks off the low seven bits and dispatches through a chain
 of comparisons to a per-format decoder, which extracts its fields into shared
 variables (`rd`, `rs1`, `rs2`, `funct3`, `funct7`, `imm`) and then dispatches
-again on `funct3` to the actual operation.
+again on `funct3` to the actual operation. Opcode `0x33` dispatches on `funct7`
+first, since `0x01` there selects the M extension rather than the base ALU.
 
 The immediate formats are where most of the subtlety lives:
 
@@ -163,8 +200,7 @@ The immediate formats are where most of the subtlety lives:
   same instruction, so sign extension is free. Using `shr` instead would turn
   every negative offset into a large positive one.
 - **S-type** immediates arrive split in two pieces, `instr[31:25]` and
-  `instr[11:7]`. The high piece is built with `sar 25`, shifted left five, and
-  the low piece is OR'd in.
+  `instr[11:7]`.
 - **B-type** immediates are the most fragmented in the ISA: four
   non-contiguous pieces covering thirteen bits using only twelve encoded bits,
   because bit 0 is always zero. Sign extension is `shl 19` / `sar 19`.
@@ -179,6 +215,20 @@ that works for small values and fails only once an operand crosses bit 31.
 `jalr` computes its target *before* writing the link register, because
 `jalr ra, ra, 0` uses the same register for both and writing first would destroy
 the destination.
+
+### Division
+
+The M extension's divides cannot be handed straight to `idiv`. On x86, dividing
+by zero or overflowing `INT_MIN / -1` raises a hardware exception that would
+kill the process — exactly what must never happen here. RISC-V instead defines
+concrete results and raises nothing:
+
+| Case | `div` | `rem` | `divu` | `remu` |
+|---|---|---|---|---|
+| divisor is zero | all ones | the dividend | all ones | the dividend |
+| `INT_MIN / -1` | `INT_MIN` | 0 | — | — |
+
+All four cases are intercepted before the division instruction is reached.
 
 ### Video pipeline
 
@@ -202,6 +252,13 @@ Two decisions keep it fast enough to look smooth:
 The dirty flag has a second effect that matters for generality: text-only
 programs never touch the framebuffer, so the flag never rises and the renderer
 never runs. Their output is not polluted by escape codes.
+
+The framebuffer *region* is larger than the visible grid, spanning `0x10008000`
+to just below `.data`. In RARS the data segment covers that whole range, so a
+program that draws one row past the bottom of the screen writes to valid memory
+and simply sees nothing. An emulator that aborted there would be stricter than
+the system it emulates, which is its own kind of bug — the Bomberman does
+exactly this.
 
 The whole frame is assembled in one buffer and issued as a single `write`, and
 the cursor is homed with `ESC[H` rather than clearing the screen, which is what
@@ -243,16 +300,17 @@ dies abruptly — which is precisely when the last few lines matter most.
 ### Error handling
 
 Every failure path prints a diagnosable message and exits cleanly. There is no
-path that produces a segmentation fault, which the assignment requires
-explicitly.
+path that produces a segmentation fault.
 
 | Condition | Response |
 |---|---|
 | Input file missing | message, exit 3 |
+| Dump larger than its array | warning on stderr, execution continues |
 | Unimplemented opcode | PC, instruction, register dump, exit 2 |
 | Unmapped or misaligned address | address, PC, register dump, exit 4 |
+| Misaligned PC | same as above |
 | Write into `.text` | treated as an invalid access |
-| Unimplemented syscall | the `a7` value, register dump, exit 5 |
+| Unimplemented syscall or CSR | the offending value, register dump, exit 5 |
 
 Writing into `.text` is rejected on purpose. RISC-V permits self-modifying code,
 but in practice a store into program memory is almost always a stray pointer,
@@ -273,7 +331,7 @@ without these guardrails there is no way to tell which one is at fault.
 | `decode_u` / `decode_uj` / `decode_r` | U, J and R format decode and execute |
 | `decode_i_load` / `decode_i_alu` | I format, loads and arithmetic |
 | `decode_s` / `decode_b` / `decode_jalr` | stores, branches, indirect jump |
-| `decode_ecall` | syscall dispatch on `a7` |
+| `decode_ecall` / `decode_csr` | syscalls and counter reads |
 | `mem_read` / `mem_write` | word access, address decode |
 | `mem_read_byte` / `mem_read_half` | sub-word reads |
 | `mem_write_byte` / `mem_write_half` | sub-word read-modify-write |
@@ -282,7 +340,7 @@ without these guardrails there is no way to tell which one is at fault.
 | `poll_key` / `term_init` / `term_restore` | keyboard and terminal state |
 | `disasm` | instruction to text |
 | `put_hex8` / `put_dec` / `emit_dec8` / `e_dec` | number formatting |
-| `read_text_file` / `read_data_file` | hex dump loading |
+| `cargar_archivo` / `parsear_hex` | dump loading |
 | `cleanup` | restore terminal, close trace file |
 
 ---
@@ -291,9 +349,9 @@ without these guardrails there is no way to tell which one is at fault.
 
 | Region | Range | Contents |
 |---|---|---|
-| `.text` | `0x00400000` – `0x00401F40` | 2000 instructions (read-only) |
-| Framebuffer | `0x10008000` – `0x1000FFFF` | 2048 words, base of `gp` |
-| `.data` | `0x10010000` – `0x10011000` | 1024 words |
+| `.text` | `0x00400000` – `0x0043FFFF` | 16384 instructions (read-only) |
+| Framebuffer | `0x10008000` – `0x1000FFFF` | base of `gp`; first 2048 words visible |
+| `.data` | `0x10010000` – `0x10017FFF` | 8192 words |
 | Stack | `0x7FFFB000` – `0x7FFFF000` | 16 KB, `sp` starts at `0x7FFFEFFC` |
 | MMIO | `0xFFFF0000` – `0xFFFF000F` | `0000` key status, `0004` key data |
 
@@ -303,18 +361,20 @@ three implied the same base.
 
 ## Supported instructions
 
-RV32I complete except `fence`, `ebreak` and the CSR instructions.
+RV32I complete except `fence`, `ebreak` and CSR writes, plus the M extension
+and the read-only counters.
 
 | Format | Instructions |
 |---|---|
 | R | `add` `sub` `sll` `slt` `sltu` `xor` `srl` `sra` `or` `and` |
+| M | `mul` `mulh` `mulhsu` `mulhu` `div` `divu` `rem` `remu` |
 | I arithmetic | `addi` `slli` `slti` `sltiu` `xori` `srli` `srai` `ori` `andi` |
 | I load | `lb` `lh` `lw` `lbu` `lhu` |
 | S | `sb` `sh` `sw` |
 | B | `beq` `bne` `blt` `bge` `bltu` `bgeu` |
 | U | `lui` `auipc` |
 | J | `jal` `jalr` |
-| System | `ecall` |
+| System | `ecall`, `rdcycle` `rdtime` `rdinstret` and their high halves |
 
 ## Syscalls (RARS services)
 
@@ -333,8 +393,8 @@ RV32I complete except `fence`, `ebreak` and the CSR instructions.
 
 ## Trace format
 
-The assignment requires every executed instruction to be shown with its details
-and its PC. The format is:
+Every executed instruction is printed with its address, its encoding, and its
+disassembly:
 
 ```
 0x00400b48  0x40730333  sub   x6, x6, x7
@@ -345,32 +405,60 @@ Branches and jumps show the **absolute target address** rather than the relative
 offset RARS prints, because in a trace thousands of lines long that saves doing
 the arithmetic by hand on every jump.
 
-### Validation
+---
 
-The disassembler was cross-checked against RARS's own listing over a full run of
-the guest program: **973 of 973 mnemonics identical**, and 832 of 834 operand
-sets equivalent after normalising formatting. The two remaining differences are
-presentational, not substantive — RARS sign-extends the `lui` immediate for
-display, whereas this emulator shows the raw encoded field.
+## Testing
+
+Three layers, from narrow to broad.
+
+**Self-checking unit tests.** `tests/test_rv32i.asm` and `tests/test_rv32m.asm`
+are RISC-V programs that compute a result, compare it against the expected
+value, and print `PASS`/`FAIL` with the offending numbers. 45 tests covering
+sign-extension edges, signed-versus-unsigned comparisons, shift-amount masking,
+`x0` immutability, sub-word stores preserving their neighbours, stack
+discipline, recursion, and every division edge case.
+
+Because they are ordinary RISC-V programs, they run in RARS too — and the two
+outputs must match byte for byte. That cross-check is what catches a
+misunderstanding shared between the bundled assembler and the emulator, which
+neither could detect alone.
+
+```bash
+make test
+```
+
+**Mutation testing.** Deliberately breaking the emulator and confirming the
+suite notices. `sra`→`srl`, `setb`→`setl`, dropping a sign extension, dropping
+`jalr`'s address mask: each should turn into a specific `FAIL`. A mutation that
+survives is a coverage gap — that is how the missing PC alignment check was
+found. Some survivors are *equivalent* mutations that genuinely cannot change
+behaviour, and those are worth recognising rather than chasing.
+
+**End-to-end.** Two complete games in `programs/`, written independently of this
+emulator, both verified to behave identically here and in RARS.
+
+The Bomberman was where generality got tested for real: running it required the
+M extension, the cycle counters, larger memory arrays, the truncation warning,
+and the framebuffer region fix — five gaps the Pong never exercised.
 
 ## Requirements
 
 A 64-bit Linux system with NASM and GNU `ld`. The video output needs a terminal
-with 24-bit colour support and at least 64 columns by 17 rows.
+with 24-bit colour support and at least 64 columns by 17 rows. `tools/rvasm.py`
+needs Python 3.
 
 ## Game controls
 
-`1` one player · `2` two players · `W`/`S` left paddle ·
-`O`/`L` right paddle · `Ctrl+C` quit
+`1` one player · `2` two players · `W`/`S` left · `O`/`L` right ·
+`Ctrl+C` quit
 
 ## Credits
 
-The RISC-V program used as the test workload — `riscv1.asm`, together with the
-`punto_text_hex.txt` and `punto_data_hex.txt` dumps and the `1` and `3` listings
-derived from it — is a Pong implementation written by Professor Ernesto Rivera
+The Pong used as the primary test workload — `programs/pong/riscv1.asm`,
+together with its dumps and listings — was written by Professor Ernesto Rivera
 Alvarado for the course EL-4314 Computer Architecture I at the Instituto
-Tecnológico de Costa Rica. It is included solely as a test program for the
-emulator.
+Tecnológico de Costa Rica, and is included with credit as its licence header
+requests.
 
-The emulator itself (`emulador.asm`) is my own work, developed with AI
-assistance.
+The emulator itself (`src/emulador.asm`), the test suites and the bundled
+assembler are my own work, developed with AI assistance.

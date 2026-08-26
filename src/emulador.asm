@@ -67,6 +67,18 @@ section .data
     mn_unk       db '?     '
     mn_relleno   db '        '   ; holgura: los nombres se copian de 8 en 8
 
+    ; Advertencia de truncamiento
+    msg_adv1     db 'ADVERTENCIA: volcado '
+    msg_adv1_len equ $ - msg_adv1
+    msg_adv2     db ' truncado: se cargaron '
+    msg_adv2_len equ $ - msg_adv2
+    msg_adv3     db ' de '
+    msg_adv3_len equ $ - msg_adv3
+    msg_adv4     db ' palabras. Aumente la constante correspondiente.', 10
+    msg_adv4_len equ $ - msg_adv4
+    nom_text     db '.text'
+    nom_data     db '.data'
+
     ; --- Video: secuencias ANSI ---
     ; Los prefijos miden 7 bytes pero se copian de 8 en 8 con un solo
     ; `mov rax`; el byte sobrante lo pisa lo que se escriba despues.
@@ -96,9 +108,9 @@ section .data
     ; Constantes y tamaños
     hex_length equ 8                            ; Longitud de cada cadena hexadecimal
     buffer_size equ 9                           ; Tamaño del buffer para leer del archivo
-    num_instructions equ 2000                   ; Límite máximo de instrucciones esperadas
+    num_instructions equ 16384                   ; holgura para volcados grandes
     file_buf_size  equ 262144                   ; holgura para cualquier volcado
-    max_data_lines equ 1024                     ; El archivo de datos tiene 1024 lineas
+    max_data_lines equ 8192                     ; holgura para volcados grandes
 
     ; ===========================================================
     ;  MAPA DE MEMORIA emulado (direcciones RISC-V, no del host)
@@ -106,7 +118,13 @@ section .data
     TEXT_BASE   equ 0x00400000
     TEXT_END    equ TEXT_BASE + 4*num_instructions
     FB_BASE     equ 0x10008000              ; framebuffer, base de gp
-    FB_WORDS    equ 2048                    ; 8192 bytes = rejilla de 64x32
+    FB_VISIBLE  equ 2048                    ; 64x32 unidades: lo que se dibuja
+    ; En RARS el segmento de datos cubre toda la region desde 0x10000000,
+    ; asi que escribir mas alla del area visible aterriza en memoria valida
+    ; y simplemente no se muestra. La region se extiende hasta DATA_BASE
+    ; para reproducir ese comportamiento: si el emulador abortara donde
+    ; RARS no lo hace, no estaria emulando RARS.
+    FB_WORDS    equ 8192                    ; hasta 0x10010000
     FB_END      equ FB_BASE + 4*FB_WORDS
     DATA_BASE   equ 0x10010000              ; verificado con 3 accesos del listado de RARS
     DATA_END    equ DATA_BASE + 4*max_data_lines
@@ -167,6 +185,8 @@ section .bss
     ; Regiones de memoria emulada
     framebuffer resd FB_WORDS                 ; 0x10008000
     stack_mem   resd STACK_WORDS              ; 0x7FFFB000
+    hex_total   resq 1                        ; palabras halladas en el volcado
+    hex_cargadas resq 1                       ; palabras que cupieron
     file_buf    resb file_buf_size            ; el volcado completo se lee aqui
     text_path   resq 1                        ; ruta del volcado .text (argumento o por omision)
     data_path   resq 1                        ; ruta del volcado .data
@@ -802,6 +822,7 @@ parsear_hex:
     xor r8, r8                                ; palabras escritas
     xor r10, r10                              ; acumulador
     xor r11, r11                              ; digitos acumulados
+    mov qword [hex_total], 0                  ; palabras HALLADAS, quepan o no
 .ph:
     test rcx, rcx
     jz .final
@@ -845,8 +866,10 @@ parsear_hex:
     jz .listo
     call .emitir                              ; ultima linea sin salto final
 .listo:
+    mov [hex_cargadas], r8
     ret
 .emitir:
+    inc qword [hex_total]                     ; se cuenta siempre, quepa o no
     cmp r8, r9
     jae .descartar                            ; no desbordar el arreglo
     mov [rdi + r8*4], r10d
@@ -854,6 +877,57 @@ parsear_hex:
 .descartar:
     xor r10, r10
     xor r11, r11
+    ret
+
+; e_str: copia rcx bytes de [rsi] a [rdi], avanzando rdi
+e_str:
+    test rcx, rcx
+    jz .es_fin
+.es_loop:
+    mov al, [rsi]
+    mov [rdi], al
+    inc rsi
+    inc rdi
+    dec rcx
+    jnz .es_loop
+.es_fin:
+    ret
+
+; advertir_trunc: rsi = nombre del segmento (5 bytes).
+; Avisa por stderr que el volcado no cupo entero. Sin esto el emulador
+; descartaba instrucciones en silencio y el programa terminaba solo, sin
+; error visible: el peor tipo de fallo.
+advertir_trunc:
+    push r14
+    mov r14, rsi
+    lea rdi, [trace_line]
+    lea rsi, [msg_adv1]
+    mov rcx, msg_adv1_len
+    call e_str
+    mov rsi, r14
+    mov rcx, 5
+    call e_str
+    lea rsi, [msg_adv2]
+    mov rcx, msg_adv2_len
+    call e_str
+    mov eax, dword [hex_cargadas]
+    call e_dec
+    lea rsi, [msg_adv3]
+    mov rcx, msg_adv3_len
+    call e_str
+    mov eax, dword [hex_total]
+    call e_dec
+    lea rsi, [msg_adv4]
+    mov rcx, msg_adv4_len
+    call e_str
+
+    lea rsi, [trace_line]
+    mov rdx, rdi
+    sub rdx, rsi
+    mov rax, 1
+    mov rdi, 2                                ; stderr
+    syscall
+    pop r14
     ret
 
 read_text_file:
@@ -866,6 +940,12 @@ read_text_file:
     lea rdi, [text_memory]
     mov r9, num_instructions
     call parsear_hex
+    mov rax, [hex_total]
+    cmp rax, [hex_cargadas]
+    jbe .t_ok
+    lea rsi, [nom_text]
+    call advertir_trunc
+.t_ok:
     ret
 
 read_data_file:
@@ -878,6 +958,12 @@ read_data_file:
     lea rdi, [data_memory]
     mov r9, max_data_lines
     call parsear_hex
+    mov rax, [hex_total]
+    cmp rax, [hex_cargadas]
+    jbe .d_ok
+    lea rsi, [nom_data]
+    call advertir_trunc
+.d_ok:
     ret
 
 ; ===============================================================
