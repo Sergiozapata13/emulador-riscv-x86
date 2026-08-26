@@ -14,8 +14,11 @@ emulator — run identically here and in RARS.
 ```bash
 make              # build
 make pong         # run the Pong
+make bomberman    # run the Bomberman
 make pong-traza   # run the Pong and write traza.txt
-make test         # run both test suites
+make test         # both test suites, assembled with rvasm
+make test-rars    # the same suites, from RARS-produced dumps
+make doc-check    # verify every path cited in the READMEs exists
 make limpiar      # remove generated files
 ```
 
