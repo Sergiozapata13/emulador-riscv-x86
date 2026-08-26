@@ -1,4 +1,4 @@
-src/*.o
+*.o
 emulador
 traza.txt
 tests/build/
