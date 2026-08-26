@@ -445,7 +445,7 @@ qué pasó. El procedimiento que funcionó una y otra vez durante el desarrollo:
 **Corra con traza a archivo** y mire el final:
 
 ```bash
-./emulador -t traza.txt programs/algo/punto_text_hex.txt programs/algo/punto_data_hex.txt
+./emulador -t traza.txt programs/<nombre>/punto_text_hex.txt programs/<nombre>/punto_data_hex.txt
 tail -20 traza.txt
 ```
 
