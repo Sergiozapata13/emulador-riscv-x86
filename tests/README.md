@@ -27,7 +27,8 @@ it. That directory is generated and ignored by git.
 To run the RARS-produced dumps instead:
 
 ```bash
-./emulador -q tests/rars/punto_text_hex.txt tests/rars/punto_data_hex.txt
+./emulador -q tests/rars/rv32i/punto_text_hex.txt tests/rars/rv32i/punto_data_hex.txt
+./emulador -q tests/rars/rv32m/punto_text_hex.txt tests/rars/rv32m/punto_data_hex.txt
 ```
 
 ## What is covered

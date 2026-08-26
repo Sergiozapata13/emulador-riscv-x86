@@ -54,7 +54,7 @@ you can judge whether a difference is a real bug or just a different
 pseudo-instruction expansion.
 
 ```bash
-python3 tools/comparar_dumps.py tests/rars/punto_text_hex.txt \
+python3 tools/comparar_dumps.py tests/rars/rv32i/punto_text_hex.txt \
                                 tests/build/punto_text_hex.txt
 ```
 
