@@ -1,4 +1,4 @@
-*.o
+src/*.o
 emulador
 traza.txt
-pruebas/punto_*.txt
+tests/build/

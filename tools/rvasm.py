@@ -10,7 +10,10 @@ REGS.update({'zero':0,'ra':1,'sp':2,'gp':3,'tp':4,'t0':5,'t1':6,'t2':7,
     's8':24,'s9':25,'s10':26,'s11':27,'t3':28,'t4':29,'t5':30,'t6':31})
 
 R_OPS = {'add':(0,0),'sub':(0,0x20),'sll':(1,0),'slt':(2,0),'sltu':(3,0),
-         'xor':(4,0),'srl':(5,0),'sra':(5,0x20),'or':(6,0),'and':(7,0)}
+         'xor':(4,0),'srl':(5,0),'sra':(5,0x20),'or':(6,0),'and':(7,0),
+         # extension M: funct7 = 1
+         'mul':(0,1),'mulh':(1,1),'mulhsu':(2,1),'mulhu':(3,1),
+         'div':(4,1),'divu':(5,1),'rem':(6,1),'remu':(7,1)}
 I_OPS = {'addi':0,'slli':1,'slti':2,'sltiu':3,'xori':4,'srli':5,'srai':5,
          'ori':6,'andi':7}
 L_OPS = {'lb':0,'lh':1,'lw':2,'lbu':4,'lhu':5}
@@ -83,6 +86,9 @@ class Asm:
         if op=='ret': return ['jalr zero,ra,0']
         if op=='call':return [f'jal ra,{args[0]}']
         if op=='nop': return ['addi zero,zero,0']
+        if op=='rdtime':    return [f'csrrs {args[0]},0xC01,zero']
+        if op=='rdcycle':   return [f'csrrs {args[0]},0xC00,zero']
+        if op=='rdinstret': return [f'csrrs {args[0]},0xC02,zero']
         if op=='beqz':return [f'beq {args[0]},zero,{args[1]}']
         if op=='bnez':return [f'bne {args[0]},zero,{args[1]}']
         if op=='neg': return [f'sub {args[0]},zero,{args[1]}']
@@ -134,6 +140,8 @@ class Asm:
                     | ((v>>12)&0xff)<<12 | r(a[0])<<7 | 0x6f]
         if op=='jalr':
             return [(int(a[2],0)&0xfff)<<20 | r(a[1])<<15 | r(a[0])<<7 | 0x67]
+        if op=='csrrs':
+            return [(int(a[1],0)&0xfff)<<20 | r(a[2])<<15 | 2<<12 | r(a[0])<<7 | 0x73]
         if op=='ecall': return [0x73]
         raise ValueError(f'instruccion no soportada: {linea}')
 

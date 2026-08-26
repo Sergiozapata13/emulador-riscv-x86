@@ -1,46 +1,53 @@
 # Emulador RISC-V en ensamblador x86-64
-# EL-4314 Arquitectura de Computadoras I
 
 NASM      := nasm
 LD        := ld
 NASMFLAGS := -f elf64 -g -F dwarf
 
-OBJETIVO  := emulador
-FUENTE    := emulador.asm
-OBJETO    := $(FUENTE:.asm=.o)
+EMU       := emulador
+FUENTE    := src/emulador.asm
+OBJETO    := src/emulador.o
 
-TEXTO     := punto_text_hex.txt
-DATOS     := punto_data_hex.txt
+PONG      := programs/pong
+TESTS     := tests
+BUILD     := tests/build
 
-.PHONY: all jugar traza verificar limpiar ayuda
+.PHONY: all pong pong-traza test test-i test-m limpiar ayuda
 
-all: $(OBJETIVO)
+all: $(EMU)
 
-$(OBJETIVO): $(OBJETO)
-	$(LD) -o $@ $^
+$(EMU): $(OBJETO)
+	$(LD) -o $@ $<
 
-%.o: %.asm
+$(OBJETO): $(FUENTE)
 	$(NASM) $(NASMFLAGS) -o $@ $<
 
-# Jugar: video en pantalla, sin generar traza
-jugar: $(OBJETIVO) $(TEXTO) $(DATOS)
-	./$(OBJETIVO) -q
+pong: $(EMU)
+	./$(EMU) -q $(PONG)/punto_text_hex.txt $(PONG)/punto_data_hex.txt
 
-# Jugar y guardar la traza desensamblada en su propio archivo
-traza: $(OBJETIVO) $(TEXTO) $(DATOS)
-	./$(OBJETIVO) -t traza.txt
+pong-traza: $(EMU)
+	./$(EMU) -t traza.txt $(PONG)/punto_text_hex.txt $(PONG)/punto_data_hex.txt
 
-# Contrastar el desensamblado contra el listado de RARS
-verificar: $(OBJETIVO) $(TEXTO) $(DATOS)
-	@timeout 5 ./$(OBJETIVO) -t /tmp/_v.txt >/dev/null 2>&1 || true
-	@echo "Instrucciones distintas ejecutadas: `cut -c1-12 /tmp/_v.txt | sort -u | wc -l`"
-	@echo "Traza escrita en /tmp/_v.txt"
+$(BUILD):
+	mkdir -p $(BUILD)
+
+test-i: $(EMU) $(BUILD)
+	@cd $(BUILD) && python3 ../../tools/rvasm.py ../../$(TESTS)/test_rv32i.asm >/dev/null
+	@./$(EMU) -q $(BUILD)/punto_text_hex.txt $(BUILD)/punto_data_hex.txt
+
+test-m: $(EMU) $(BUILD)
+	@cd $(BUILD) && python3 ../../tools/rvasm.py ../../$(TESTS)/test_rv32m.asm >/dev/null
+	@./$(EMU) -q $(BUILD)/punto_text_hex.txt $(BUILD)/punto_data_hex.txt
+
+test: test-i test-m
 
 limpiar:
-	rm -f $(OBJETO) $(OBJETIVO) traza.txt
+	rm -f $(OBJETO) $(EMU) traza.txt
+	rm -rf $(BUILD)
 
 ayuda:
-	@echo "make          compilar"
-	@echo "make jugar    ejecutar sin traza (-q)"
-	@echo "make traza    ejecutar y guardar traza.txt (-t)"
-	@echo "make limpiar  borrar los generados"
+	@echo "make             compilar"
+	@echo "make pong        ejecutar el Pong"
+	@echo "make pong-traza  ejecutar el Pong y guardar traza.txt"
+	@echo "make test        correr los dos bancos de pruebas"
+	@echo "make limpiar     borrar lo generado"

@@ -97,6 +97,7 @@ section .data
     hex_length equ 8                            ; Longitud de cada cadena hexadecimal
     buffer_size equ 9                           ; Tamaño del buffer para leer del archivo
     num_instructions equ 2000                   ; Límite máximo de instrucciones esperadas
+    file_buf_size  equ 262144                   ; holgura para cualquier volcado
     max_data_lines equ 1024                     ; El archivo de datos tiene 1024 lineas
 
     ; ===========================================================
@@ -166,6 +167,12 @@ section .bss
     ; Regiones de memoria emulada
     framebuffer resd FB_WORDS                 ; 0x10008000
     stack_mem   resd STACK_WORDS              ; 0x7FFFB000
+    file_buf    resb file_buf_size            ; el volcado completo se lee aqui
+    text_path   resq 1                        ; ruta del volcado .text (argumento o por omision)
+    data_path   resq 1                        ; ruta del volcado .data
+    instr_count resq 1                        ; instrucciones ejecutadas (contadores CSR)
+    t2_sec      resq 1                        ; timespec para clock_gettime
+    t2_nsec     resq 1                        ; debe ir inmediatamente despues
     trace_fd    resq 1                        ; descriptor de la traza (1 = stdout)
     trace_line  resb 128                      ; la linea desensamblada se arma aqui
     d_rd        resd 1                        ; campos para el desensamblador,
@@ -214,13 +221,22 @@ _start:
     ; emulado, traza y video) y solo dos descriptores estandar. Con un
     ; descriptor propio para la traza, los tres quedan separados.
     mov qword [trace_fd], 1                   ; por omision, stdout
+    lea rax, [filename_text]                  ; rutas por omision, para que
+    mov [text_path], rax                      ; el emulador siga funcionando
+    lea rax, [filename_data]                  ; sin argumentos
+    mov [data_path], rax
+
     mov r14, [rsp]                            ; argc
     lea r15, [rsp + 8]                        ; &argv[0]
     mov rbx, 1                                ; argv[0] es el nombre: se salta
+    xor r12d, r12d                            ; cuantos posicionales van
 .arg_loop:
     cmp rbx, r14
     jae .arg_fin
     mov rsi, [r15 + rbx*8]
+
+    cmp byte [rsi], '-'                       ; no empieza con guion: es una ruta
+    jne .arg_posicional
 
     cmp word [rsi], '-q'                      ; NASM ya lo ordena little-endian
     jne .arg_t
@@ -242,6 +258,19 @@ _start:
     cmp rax, 0
     jl .arg_sig                               ; si falla, la traza sigue en stdout
     mov [trace_fd], rax
+    jmp .arg_sig
+
+.arg_posicional:
+    ; El primer posicional es el .text y el segundo el .data.
+    test r12d, r12d
+    jnz .arg_pos2
+    mov [text_path], rsi
+    inc r12d
+    jmp .arg_sig
+.arg_pos2:
+    mov [data_path], rsi
+    inc r12d
+
 .arg_sig:
     inc rbx
     jmp .arg_loop
@@ -314,6 +343,7 @@ main_loop:
     mov rcx, text_memory                      ; Dirección base de `text_memory`
     mov edx, [rcx + rax*4]                    ; Cargar la instrucción de 4 bytes en edx
     mov r13d, edx                             ; Guardar la instrucción (r13 sobrevive a las llamadas)
+    inc qword [instr_count]                   ; alimenta los contadores rdcycle/rdinstret
 
     call print_trace                          ; Imprimir PC e instrucción
 
@@ -469,6 +499,10 @@ decode_r:
     mov ecx, [rs2]
     call read_reg
 
+    ; funct7 = 0x01 marca la extension M (multiplicacion y division)
+    cmp dword [funct7], 1
+    je .m_ext
+
     mov ecx, [funct3]
     cmp ecx, 0
     je .r_addsub
@@ -539,6 +573,116 @@ decode_r:
     call write_reg
     ret
 
+; ---------------------------------------------------------------
+;  Extension RV32M. r11d = R[rs1], eax = R[rs2]
+;
+;  Las divisiones NO pueden delegarse a `idiv` sin mas: en x86 una
+;  division entre cero o el desbordamiento de INT_MIN/-1 lanzan una
+;  excepcion que tumbaria el proceso. RISC-V, en cambio, define
+;  resultados concretos para esos casos y no lanza nada. Hay que
+;  interceptarlos antes de llegar a la instruccion de division.
+; ---------------------------------------------------------------
+.m_ext:
+    mov ecx, [funct3]
+    cmp ecx, 0
+    je .m_mul
+    cmp ecx, 1
+    je .m_mulh
+    cmp ecx, 2
+    je .m_mulhsu
+    cmp ecx, 3
+    je .m_mulhu
+    cmp ecx, 4
+    je .m_div
+    cmp ecx, 5
+    je .m_divu
+    cmp ecx, 6
+    je .m_rem
+    cmp ecx, 7
+    je .m_remu
+    jmp stop_unimplemented
+
+.m_mul:                            ; 32 bits bajos: el signo da igual
+    imul r11d, eax
+    jmp .r_store
+
+.m_mulh:                           ; 32 altos, ambos CON signo
+    movsxd r11, r11d
+    movsxd rax, eax
+    imul r11, rax
+    shr r11, 32
+    jmp .r_store
+
+.m_mulhsu:                         ; 32 altos, rs1 con signo y rs2 sin signo
+    movsxd r11, r11d
+    imul r11, rax                  ; rax ya viene extendido con ceros
+    shr r11, 32
+    jmp .r_store
+
+.m_mulhu:                          ; 32 altos, ambos SIN signo
+    imul r11, rax                  ; los dos caben en 32 bits: el producto
+    shr r11, 32                    ; entra completo en 64
+    jmp .r_store
+
+.m_div:                            ; division con signo
+    test eax, eax
+    jnz .m_div_ok
+    mov r11d, -1                   ; division entre cero: todos unos
+    jmp .r_store
+.m_div_ok:
+    cmp eax, -1
+    jne .m_div_go
+    cmp r11d, 0x80000000
+    jne .m_div_go
+    jmp .r_store                   ; INT_MIN / -1 desborda: devuelve INT_MIN
+.m_div_go:
+    mov ecx, eax
+    mov eax, r11d
+    cdq                            ; extiende el signo de eax en edx
+    idiv ecx
+    mov r11d, eax
+    jmp .r_store
+
+.m_rem:                            ; resto con signo, sigue al dividendo
+    test eax, eax
+    jz .r_store                    ; resto entre cero: el dividendo intacto
+    cmp eax, -1
+    jne .m_rem_go
+    cmp r11d, 0x80000000
+    jne .m_rem_go
+    xor r11d, r11d                 ; INT_MIN %% -1 = 0
+    jmp .r_store
+.m_rem_go:
+    mov ecx, eax
+    mov eax, r11d
+    cdq
+    idiv ecx
+    mov r11d, edx
+    jmp .r_store
+
+.m_divu:                           ; division sin signo
+    test eax, eax
+    jnz .m_divu_go
+    mov r11d, -1
+    jmp .r_store
+.m_divu_go:
+    mov ecx, eax
+    mov eax, r11d
+    xor edx, edx
+    div ecx
+    mov r11d, eax
+    jmp .r_store
+
+.m_remu:                           ; resto sin signo
+    test eax, eax
+    jz .r_store
+    mov ecx, eax
+    mov eax, r11d
+    xor edx, edx
+    div ecx
+    mov r11d, edx
+    jmp .r_store
+
 ; Decodificación del tipo `UJ` (ej. `jal`)
 decode_uj:
     ; Extraer `rd` (bits 7-11)
@@ -598,182 +742,143 @@ skip_save_ra:
 
     ret
 
-read_text_file:
-    ; Inicializar la posición en text_memory
-    mov rbx, text_memory
-    mov [text_memory_pos], rbx
+; ===============================================================
+;  Carga de los volcados hexadecimales
+; ===============================================================
+; El lector original tomaba el archivo en trozos de 9 bytes, justo el
+; tamano de "8 digitos + salto de linea". Funcionaba de milagro: con
+; CRLF, con espacios o con una lectura parcial se desincronizaba y
+; perdia los digitos a medio acumular.
+;
+; Aqui se lee el archivo COMPLETO a un buffer y despues se parsea. Eso
+; elimina de raiz toda esa clase de fallo, y de paso permite aceptar
+; mayusculas, minusculas, CRLF y cualquier espaciado.
+; ---------------------------------------------------------------
 
-    ; Abrir el archivo punto_text_hex.txt para lectura
+; cargar_archivo: rdi = ruta, rsi = buffer, rdx = capacidad
+;                 devuelve rax = bytes leidos
+cargar_archivo:
+    push rbx
+    push r12
+    push r13
+    push r14
+    mov r12, rsi                              ; buffer
+    mov r13, rdx                              ; capacidad
     mov rax, 2                                ; syscall: open
-    lea rdi, [filename_text]                  ; Nombre del archivo
-    mov rsi, 0                                ; Modo de solo lectura (O_RDONLY)
+    xor rsi, rsi                              ; O_RDONLY
+    xor rdx, rdx
     syscall
-    cmp rax, 0                                ; open devuelve negativo si falla
-    jl open_error                             ; comparacion CON SIGNO
-    mov rdi, rax                              ; Guardar el descriptor de archivo
-
-read_text_loop:
-    ; Leer el contenido del archivo
-    mov rax, 0                                ; syscall: read
-    mov rsi, buffer                           ; Dirección del buffer
-    mov rdx, buffer_size                      ; Tamaño del buffer
+    cmp rax, 0
+    jl open_error
+    mov r14, rax                              ; descriptor
+    xor rbx, rbx                              ; total acumulado
+.leer:
+    mov rdx, r13
+    sub rdx, rbx                              ; espacio restante
+    jz .cerrar
+    xor rax, rax                              ; syscall: read
+    mov rdi, r14
+    lea rsi, [r12 + rbx]
     syscall
-    
-    test rax, rax                             ; Verificar si se leyeron bytes
-    jz close_text_file                        ; Si rax es 0, finalizar la lectura
-
-    mov [bytes_read], rax                     ; Guardar el número de bytes leídos
-    mov rcx, rax                              ; Inicializar `rcx` con el número de bytes leídos
-    lea rsi, [buffer]                         ; Apuntar `rsi` al comienzo del buffer
-    mov rbx, [text_memory_pos]                ; Restaurar la posición actual en text_memory
-
-process_text_block:
-    ; Verificar si hay al menos `hex_length` caracteres para procesar
-    cmp rcx, hex_length
-    jl read_text_loop                         ; Si no hay suficientes caracteres, leer más del archivo
-
-    ; Convertir 8 caracteres ASCII a un valor hexadecimal
-    xor rax, rax                              ; Limpiar el acumulador
-    mov rdx, hex_length                       ; Contador de caracteres a convertir
-
-convert_text_hex:
-    cmp rcx, 0
-    jz read_text_loop                         ; Si `rcx` es 0, leer más del archivo
-
-    movzx r8, byte [rsi]                      ; Cargar el carácter actual en r8
-    inc rsi                                   ; Avanzar al siguiente carácter
-    dec rcx                                   ; Decrementar el número de bytes restantes
-    
-    cmp r8, 10                                ; Verificar si es '\n' (ASCII 10)
-    je convert_text_hex                       ; Si es un salto de línea, saltar al siguiente carácter
-
-    cmp r8, '0'
-    jb invalid_character                      ; Si es menor que '0', es inválido
-    cmp r8, '9'
-    jbe is_text_digit                         ; Si es <= '9', es un dígito válido
-    cmp r8, 'a'
-    jb invalid_character                      ; Si es menor que 'a', es inválido
-    cmp r8, 'f'
-    ja invalid_character                      ; Si es mayor que 'f', es inválido
-
-    sub r8, 'a'
-    add r8, 10                                ; a = 10, b = 11, ..., f = 15
-    jmp store_text_value
-
-is_text_digit:
-    sub r8, '0'
-
-store_text_value:
-    shl rax, 4                                ; Desplazar 4 bits para hacer espacio para el dígito
-    add rax, r8                               ; Agregar el valor convertido a rax
-    dec rdx                                   ; Decrementar el contador de caracteres
-    jnz convert_text_hex                      ; Continuar si no se han convertido los 8 caracteres
-
-    mov [rbx], eax                            ; Guardar los 4 bytes de rax (32 bits) en text_memory
-    add rbx, 4                                ; Mover al siguiente espacio de 4 bytes en text_memory
-    mov [text_memory_pos], rbx                ; Actualizar la posición de text_memory
-
-    jmp process_text_block
-
-close_text_file:
-    ; Cerrar el archivo
+    cmp rax, 0
+    jle .cerrar                               ; 0 = fin de archivo
+    add rbx, rax
+    jmp .leer
+.cerrar:
     mov rax, 3                                ; syscall: close
-    mov rdi, rdi                              ; Descriptor de archivo
+    mov rdi, r14
     syscall
+    mov rax, rbx
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+
+; parsear_hex: rsi = buffer, rcx = longitud, rdi = destino, r9 = maximo
+; Acumula digitos hexadecimales; cualquier caracter que no lo sea cierra
+; la palabra en curso. Asi no importa como esten separadas las lineas.
+parsear_hex:
+    xor r8, r8                                ; palabras escritas
+    xor r10, r10                              ; acumulador
+    xor r11, r11                              ; digitos acumulados
+.ph:
+    test rcx, rcx
+    jz .final
+    movzx rax, byte [rsi]
+    inc rsi
+    dec rcx
+    cmp al, '0'
+    jb .sep
+    cmp al, '9'
+    jbe .d09
+    cmp al, 'A'
+    jb .sep
+    cmp al, 'F'
+    jbe .dAF
+    cmp al, 'a'
+    jb .sep
+    cmp al, 'f'
+    ja .sep
+    sub al, 'a' - 10                          ; minusculas
+    jmp .acum
+.dAF:
+    sub al, 'A' - 10                          ; MAYUSCULAS (asi vuelca RARS)
+    jmp .acum
+.d09:
+    sub al, '0'
+.acum:
+    shl r10, 4
+    or r10, rax
+    inc r11
+    cmp r11, 8
+    jb .ph
+    call .emitir                              ; palabra completa
+    jmp .ph
+.sep:
+    test r11, r11                             ; separador: cerrar lo acumulado
+    jz .ph
+    call .emitir
+    jmp .ph
+.final:
+    test r11, r11
+    jz .listo
+    call .emitir                              ; ultima linea sin salto final
+.listo:
+    ret
+.emitir:
+    cmp r8, r9
+    jae .descartar                            ; no desbordar el arreglo
+    mov [rdi + r8*4], r10d
+    inc r8
+.descartar:
+    xor r10, r10
+    xor r11, r11
+    ret
+
+read_text_file:
+    mov rdi, [text_path]
+    lea rsi, [file_buf]
+    mov rdx, file_buf_size
+    call cargar_archivo
+    mov rcx, rax
+    lea rsi, [file_buf]
+    lea rdi, [text_memory]
+    mov r9, num_instructions
+    call parsear_hex
     ret
 
 read_data_file:
-    ; Inicializar la posición en data_memory
-    mov rbx, data_memory
-    mov [data_memory_pos], rbx
-    xor r10, r10                              ; Inicializar contador de líneas procesadas
-
-    ; Abrir el archivo punto_data_hex.txt para lectura
-    mov rax, 2                                ; syscall: open
-    lea rdi, [filename_data]                  ; Nombre del archivo
-    mov rsi, 0                                ; Modo de solo lectura (O_RDONLY)
-    syscall
-    cmp rax, 0                                ; open devuelve negativo si falla
-    jl open_error                             ; comparacion CON SIGNO
-    mov rdi, rax                              ; Guardar el descriptor de archivo
-
-read_data_loop:
-    ; Leer el contenido del archivo
-    mov rax, 0                                ; syscall: read
-    mov rsi, buffer                           ; Dirección del buffer
-    mov rdx, buffer_size                      ; Tamaño del buffer
-    syscall
-    
-    test rax, rax                             ; Verificar si se leyeron bytes
-    jz close_data_file                        ; Si rax es 0, finalizar la lectura
-
-    mov [bytes_read], rax                     ; Guardar el número de bytes leídos
-    mov rcx, rax                              ; Inicializar `rcx` con el número de bytes leídos
-    lea rsi, [buffer]                         ; Apuntar `rsi` al comienzo del buffer
-    mov rbx, [data_memory_pos]                ; Restaurar la posición actual en data_memory
-
-process_data_block:
-    cmp r10, max_data_lines                   ; Verificar si se procesaron 30 líneas
-    jge close_data_file                       ; Si se alcanzaron 30 líneas, finalizar
-
-    cmp rcx, hex_length
-    jl read_data_loop                         ; Si no hay suficientes caracteres, leer más del archivo
-
-    xor rax, rax                              ; Limpiar el acumulador
-    mov rdx, hex_length                       ; Contador de caracteres a convertir
-
-convert_data_hex:
-    cmp rcx, 0
-    jz read_data_loop                         ; Si `rcx` es 0, leer más del archivo
-
-    movzx r8, byte [rsi]                      ; Cargar el carácter actual en r8
-    inc rsi                                   ; Avanzar al siguiente carácter
-    dec rcx                                   ; Decrementar el número de bytes restantes
-    
-    cmp r8, 10                                ; Verificar si es '\n' (ASCII 10)
-    je convert_data_hex                       ; Si es un salto de línea, saltar al siguiente carácter
-
-    cmp r8, '0'
-    jb invalid_character                      ; Si es menor que '0', es inválido
-    cmp r8, '9'
-    jbe is_data_digit                         ; Si es <= '9', es un dígito válido
-    cmp r8, 'a'
-    jb invalid_character                      ; Si es menor que 'a', es inválido
-    cmp r8, 'f'
-    ja invalid_character                      ; Si es mayor que 'f', es inválido
-
-    sub r8, 'a'
-    add r8, 10                                ; a = 10, b = 11, ..., f = 15
-    jmp store_data_value
-
-is_data_digit:
-    sub r8, '0'
-
-store_data_value:
-    shl rax, 4                                ; Desplazar 4 bits para hacer espacio para el dígito
-    add rax, r8                               ; Agregar el valor convertido a rax
-    dec rdx                                   ; Decrementar el contador de caracteres
-    jnz convert_data_hex                      ; Continuar si no se han convertido los 8 caracteres
-
-    mov [rbx], eax                            ; Guardar los 4 bytes de rax (32 bits) en data_memory
-    add rbx, 4                                ; Mover al siguiente espacio de 4 bytes en data_memory
-    mov [data_memory_pos], rbx                ; Actualizar la posición de data_memory
-    inc r10                                   ; Incrementar el contador de líneas
-
-    jmp process_data_block
-
-close_data_file:
-    ; Cerrar el archivo
-    mov rax, 3                                ; syscall: close
-    mov rdi, rdi                              ; Descriptor de archivo
-    syscall
+    mov rdi, [data_path]
+    lea rsi, [file_buf]
+    mov rdx, file_buf_size
+    call cargar_archivo
+    mov rcx, rax
+    lea rsi, [file_buf]
+    lea rdi, [data_memory]
+    mov r9, max_data_lines
+    call parsear_hex
     ret
-
-invalid_character:
-    ; Si hay un carácter inválido, salir con estado de error
-    mov rax, 60                               ; syscall: exit
-    mov rdi, 1                                ; estado de salida: 1 (error)
-    syscall
 
 ; ===============================================================
 ;  Rutinas de soporte: traza, errores e impresion hexadecimal
@@ -1539,6 +1644,14 @@ read_dec:
 
 ; ---------------------------------------------------------------
 decode_ecall:
+    ; El opcode 0x73 cubre ecall, ebreak y las instrucciones CSR.
+    ; funct3 = 0 son ecall/ebreak; cualquier otro valor es un CSR.
+    mov ecx, edx
+    shr ecx, 12
+    and ecx, 7
+    test ecx, ecx
+    jnz decode_csr
+
     test edx, 0x00100000           ; bit 20 distingue ebreak de ecall
     jnz stop_unimplemented
 
@@ -2589,4 +2702,79 @@ mem_write_half:
     pop r15
     pop r14
     pop rbx
+    ret
+
+; ===============================================================
+;  Contadores CSR: rdcycle, rdtime, rdinstret
+; ===============================================================
+; `rdtime a1` es en realidad `csrrs a1, time, x0`. El Bomberman lo usa
+; como semilla de aleatoriedad, combinandolo con xor. Solo se admiten
+; los tres contadores de solo lectura y sus mitades altas; cualquier
+; otro CSR para el emulador con un mensaje.
+; ---------------------------------------------------------------
+decode_csr:
+    ; El registro destino se extrae AHORA y se guarda en la pila.
+    ; leer_ms hace una division, y `div` escribe el resto en rdx, que es
+    ; justo donde vive la instruccion actual. Ademas `syscall` destruye
+    ; rcx y r11. Si se extrajera rd despues, saldria de un valor
+    ; corrupto y rdtime escribiria en un registro al azar: un error
+    ; intermitente que depende de los nanosegundos del reloj.
+    mov ecx, edx
+    shr ecx, 7
+    and ecx, 0x1F                  ; rd
+    push rcx
+
+    mov r10d, edx
+    shr r10d, 20
+    and r10d, 0xFFF                ; numero de CSR
+
+    cmp r10d, 0xC00                ; cycle
+    je .csr_cont_lo
+    cmp r10d, 0xC02                ; instret
+    je .csr_cont_lo
+    cmp r10d, 0xC80                ; cycleh
+    je .csr_cont_hi
+    cmp r10d, 0xC82                ; instreth
+    je .csr_cont_hi
+    cmp r10d, 0xC01                ; time
+    je .csr_time_lo
+    cmp r10d, 0xC81                ; timeh
+    je .csr_time_hi
+    pop rcx
+    jmp stop_unimplemented
+
+.csr_cont_lo:
+    mov eax, dword [instr_count]
+    jmp .csr_guardar
+.csr_cont_hi:
+    mov rax, [instr_count]
+    shr rax, 32
+    jmp .csr_guardar
+
+.csr_time_lo:
+    call leer_ms
+    jmp .csr_guardar
+.csr_time_hi:
+    call leer_ms
+    shr rax, 32
+
+.csr_guardar:
+    pop rcx                        ; rd, a salvo de los syscalls
+    call write_reg
+    ret
+
+; leer_ms: rax = milisegundos del reloj monotonico
+leer_ms:
+    mov rax, 228                   ; syscall: clock_gettime
+    mov rdi, 1                     ; CLOCK_MONOTONIC
+    lea rsi, [t2_sec]              ; t2_nsec va justo detras: es el struct
+    syscall
+    mov rax, [t2_sec]
+    imul rax, rax, 1000
+    mov r9, rax
+    mov rax, [t2_nsec]
+    xor rdx, rdx
+    mov rcx, 1000000
+    div rcx                        ; nanosegundos -> milisegundos
+    add rax, r9
     ret
