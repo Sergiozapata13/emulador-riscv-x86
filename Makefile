@@ -9,10 +9,12 @@ FUENTE    := src/emulador.asm
 OBJETO    := src/emulador.o
 
 PONG      := programs/pong
+BOMBERMAN := programs/bomberman
 TESTS     := tests
 BUILD     := tests/build
+RARS      := tests/rars
 
-.PHONY: all pong pong-traza test test-i test-m limpiar ayuda
+.PHONY: all pong pong-traza bomberman test test-i test-m test-rars doc-check limpiar ayuda
 
 all: $(EMU)
 
@@ -22,12 +24,19 @@ $(EMU): $(OBJETO)
 $(OBJETO): $(FUENTE)
 	$(NASM) $(NASMFLAGS) -o $@ $<
 
+# ---- Programas --------------------------------------------------------
 pong: $(EMU)
 	./$(EMU) -q $(PONG)/punto_text_hex.txt $(PONG)/punto_data_hex.txt
 
 pong-traza: $(EMU)
 	./$(EMU) -t traza.txt $(PONG)/punto_text_hex.txt $(PONG)/punto_data_hex.txt
 
+bomberman: $(EMU)
+	./$(EMU) -q $(BOMBERMAN)/punto_text_hex.txt $(BOMBERMAN)/punto_data_hex.txt
+
+# ---- Bancos de pruebas ------------------------------------------------
+# rvasm.py escribe los volcados en el directorio actual, por eso se entra
+# a $(BUILD) antes de invocarlo.
 $(BUILD):
 	mkdir -p $(BUILD)
 
@@ -41,6 +50,26 @@ test-m: $(EMU) $(BUILD)
 
 test: test-i test-m
 
+# Los mismos bancos, pero con los volcados que produjo RARS. Valida que el
+# emulador decodifique el codigo maquina de la referencia, no solo el que
+# genera el ensamblador propio.
+test-rars: $(EMU)
+	@./$(EMU) -q $(RARS)/rv32i/punto_text_hex.txt $(RARS)/rv32i/punto_data_hex.txt
+	@./$(EMU) -q $(RARS)/rv32m/punto_text_hex.txt $(RARS)/rv32m/punto_data_hex.txt
+
+# ---- Documentacion ----------------------------------------------------
+# Comprueba que toda ruta mencionada en los README exista de verdad. La
+# documentacion que apunta a archivos inexistentes es peor que no tenerla:
+# hace perder tiempo a quien confia en ella. Los marcadores <...> se
+# excluyen a proposito.
+doc-check:
+	@echo "Verificando rutas mencionadas en la documentacion..."
+	@faltan=0; \
+	for p in `grep -rhoE '(tests|tools|programs|src)/[A-Za-z0-9_./-]+' --include='*.md' . | sort -u`; do \
+	    if [ ! -e "$$p" ]; then echo "  NO EXISTE: $$p"; faltan=1; fi; \
+	done; \
+	if [ $$faltan -eq 0 ]; then echo "  todas las rutas existen"; else exit 1; fi
+
 limpiar:
 	rm -f $(OBJETO) $(EMU) traza.txt
 	rm -rf $(BUILD)
@@ -49,5 +78,8 @@ ayuda:
 	@echo "make             compilar"
 	@echo "make pong        ejecutar el Pong"
 	@echo "make pong-traza  ejecutar el Pong y guardar traza.txt"
-	@echo "make test        correr los dos bancos de pruebas"
+	@echo "make bomberman   ejecutar el Bomberman"
+	@echo "make test        bancos de pruebas (ensamblados con rvasm)"
+	@echo "make test-rars   los mismos bancos con los volcados de RARS"
+	@echo "make doc-check   verificar las rutas citadas en los README"
 	@echo "make limpiar     borrar lo generado"
