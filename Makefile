@@ -14,7 +14,7 @@ TESTS     := tests
 BUILD     := tests/build
 RARS      := tests/rars
 
-.PHONY: all pong pong-traza bomberman test test-i test-m test-rars doc-check limpiar ayuda
+.PHONY: all pong pong-traza bomberman test test-i test-m test-rars smoke doc-check ci limpiar ayuda
 
 all: $(EMU)
 
@@ -57,6 +57,25 @@ test-rars: $(EMU)
 	@./$(EMU) -q $(RARS)/rv32i/punto_text_hex.txt $(RARS)/rv32i/punto_data_hex.txt
 	@./$(EMU) -q $(RARS)/rv32m/punto_text_hex.txt $(RARS)/rv32m/punto_data_hex.txt
 
+# ---- Prueba de humo de los programas reales ---------------------------
+# Los juegos se quedan esperando teclas, asi que se corren unos segundos
+# y se revisa que no hayan emitido ningun error. Valida que ambos cargan,
+# arrancan y dibujan, que es lo que ninguna prueba unitaria cubre.
+smoke: $(EMU)
+	@echo "Prueba de humo de los programas..."
+	@for p in $(PONG) $(BOMBERMAN); do \
+	    timeout 5 ./$(EMU) -q $$p/punto_text_hex.txt $$p/punto_data_hex.txt \
+	        >/dev/null 2>.smoke.err </dev/null || true; \
+	    if grep -qE 'ERROR|STOP|ADVERTENCIA' .smoke.err; then \
+	        echo "  FALLO en $$p:"; grep -E 'ERROR|STOP|ADVERTENCIA' .smoke.err; \
+	        rm -f .smoke.err; exit 1; \
+	    fi; \
+	    if [ ! -s .smoke.err ]; then \
+	        echo "  FALLO en $$p: no dibujo nada"; rm -f .smoke.err; exit 1; \
+	    fi; \
+	    echo "  $$p: arranca y dibuja, sin errores"; \
+	done; rm -f .smoke.err
+
 # ---- Documentacion ----------------------------------------------------
 # Comprueba que toda ruta mencionada en los README exista de verdad. La
 # documentacion que apunta a archivos inexistentes es peor que no tenerla:
@@ -70,8 +89,11 @@ doc-check:
 	done; \
 	if [ $$faltan -eq 0 ]; then echo "  todas las rutas existen"; else exit 1; fi
 
+# Todo lo que puede comprobarse sin intervencion humana.
+ci: test test-rars smoke doc-check
+
 limpiar:
-	rm -f $(OBJETO) $(EMU) traza.txt
+	rm -f $(OBJETO) $(EMU) traza.txt .smoke.err
 	rm -rf $(BUILD)
 
 ayuda:
@@ -81,5 +103,7 @@ ayuda:
 	@echo "make bomberman   ejecutar el Bomberman"
 	@echo "make test        bancos de pruebas (ensamblados con rvasm)"
 	@echo "make test-rars   los mismos bancos con los volcados de RARS"
+	@echo "make smoke       comprobar que ambos juegos arrancan y dibujan"
 	@echo "make doc-check   verificar las rutas citadas en los README"
+	@echo "make ci          todo lo anterior de una vez"
 	@echo "make limpiar     borrar lo generado"

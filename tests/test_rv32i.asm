@@ -262,7 +262,11 @@ t26_sigue:
     la a0, msg_nl
     li a7, 4
     ecall
-    li a7, 10
+    # Salir con el numero de fallos como codigo de salida. Sin esto el
+    # emulador termina en 0 aunque haya pruebas fallidas, y cualquier
+    # automatizacion veria verde un banco roto.
+    mv a0, s1
+    li a7, 93
     ecall
 
 # =====================================================================

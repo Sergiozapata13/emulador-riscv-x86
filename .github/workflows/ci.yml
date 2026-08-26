@@ -1,0 +1,32 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar NASM
+        run: sudo apt-get update && sudo apt-get install -y nasm
+
+      - name: Compilar
+        run: make
+
+      - name: Bancos de pruebas (ensamblados con rvasm)
+        run: make test
+
+      - name: Bancos de pruebas (volcados de RARS)
+        run: make test-rars
+
+      - name: Prueba de humo de los programas
+        run: make smoke
+
+      - name: Rutas citadas en la documentacion
+        run: make doc-check
